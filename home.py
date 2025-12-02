@@ -1,7 +1,5 @@
 import streamlit as st
 import numpy as np
-from PIL import Image, ImageDraw
-import io
 from pathlib import Path
 
 # --- Config & style ---
@@ -15,9 +13,6 @@ FUTURE_CSS = """
 html, body, [class*="css"]  {
     font-family: 'Inter', sans-serif;
 }
-header .css-1v3fvcr { /* hides default Streamlit menu text slightly for cleaner */
-    display: none;
-}
 .main {
     background: linear-gradient(135deg, rgba(10,10,30,0.95) 0%, rgba(18,11,43,0.9) 40%, rgba(6,12,34,0.92) 100%);
     color: #E6F0FF;
@@ -30,42 +25,32 @@ h1, .stTitle {
     color: #D7F0FF;
     text-shadow: 0 2px 10px rgba(0,200,255,0.08);
 }
-.stButton>button {
-    background: linear-gradient(90deg,#00ffa3,#00d4ff) !important;
-    color: #001;
-    border: none;
-}
 .section {
     background: rgba(255,255,255,0.03);
     padding: 12px;
     border-radius: 8px;
     margin-bottom: 12px;
 }
-.lang-pill {
-    background: rgba(255,255,255,0.03);
-    padding: 6px 10px;
-    border-radius: 999px;
-    color: #cfefff;
-    font-weight: 600;
-    margin-right: 6px;
-}
 .small-muted {color: #bcd6ff; font-size:0.95rem;}
 </style>
 """
-
 st.markdown(FUTURE_CSS, unsafe_allow_html=True)
 
-# --- Translations ---
-LANGS = {
-    "id": "Bahasa Indonesia",
-    "en": "English",
-    "zh": "中文",
-    "ko": "한국어",
-}
-# default language selector in the top-right area via sidebar for consistency
-st.sidebar.markdown("<div class='section'><strong class='small-muted'>Language / Bahasa / 语言 / 언어</strong></div>", unsafe_allow_html=True)
-lang = st.sidebar.selectbox("Select language", options=list(LANGS.keys()), format_func=lambda k: LANGS[k])
+# --- Sidebar top: Home title + Language selector with flags ---
+st.sidebar.title("Home")  # perbaikan kapitalisasi seperti permintaan
+LANG_OPTIONS = [
+    ("id", "🇮🇩 Bahasa Indonesia"),
+    ("en", "🇺🇸 English"),
+    ("zh", "🇨🇳 中文"),
+    ("ko", "🇰🇷 한국어"),
+]
+lang_keys = [k for k, _ in LANG_OPTIONS]
+lang_labels = {k: label for k, label in LANG_OPTIONS}
+# Use selectbox but show flags in the display
+default_index = 1 if "en" in lang_keys else 0
+lang = st.sidebar.selectbox("Language", options=lang_keys, index=default_index, format_func=lambda k: lang_labels[k])
 
+# --- Translations small table ---
 T = {
     "title": {
         "en": "Matrix & Convolution Playground",
@@ -104,51 +89,20 @@ T = {
         "ko": "'Image Processing Tools'로 이동하여 자신의 이미지에서 이러한 커널과 변환을 시도하세요.",
     }
 }
-
 get = lambda k: T[k][lang]
 
 # --- Page content ---
 st.markdown(f"<div class='main'><h1>{get('title')}</h1><p class='small-muted'>{get('desc')}</p></div>", unsafe_allow_html=True)
-
 st.markdown(f"<div class='section'><h3>{get('quick_primer')}</h3></div>", unsafe_allow_html=True)
 
-st.markdown(f"<div class='section'><h4>{get('mat_affine')}</h4><p class='small-muted'>"
-            "An affine transform is a 3x3 matrix that maps coordinates [x, y, 1] → [x', y', 1]. "
-            "Common components: translation, rotation, scaling, shear."
+# Transform explanation only (removed arrow image as requested)
+st.markdown(f"<div class='section'><h4>{get('mat_affine')}</h4>"
+            "<p class='small-muted'>"
+            "An affine transform is represented by a 3×3 matrix that maps coordinates [x, y, 1] → [x', y', 1]. "
+            "It composes translation, rotation, scaling, and shear. In practice we build a single matrix by composing these components and apply it to image coordinates using an inverse mapping (PIL/other libraries expect the inverse affine coefficients)."
             "</p></div>", unsafe_allow_html=True)
 
-# Arrow demo (kept from original snippet behavior)
-def make_arrow_image(size=200, color=(0, 200, 255)):
-    im = Image.new("RGB", (size, size), (10, 10, 30))
-    draw = ImageDraw.Draw(im)
-    draw.polygon([(size*0.2, size*0.5), (size*0.7, size*0.2), (size*0.7, size*0.4),
-                  (size*0.95, size*0.4), (size*0.95, size*0.6), (size*0.7, size*0.6),
-                  (size*0.7, size*0.8)], fill=color)
-    return im
-
-def apply_affine_pil(img, matrix):
-    mat = np.array(matrix, dtype=float)
-    inv = np.linalg.inv(mat)
-    a, b, c = inv[0, 0], inv[0, 1], inv[0, 2]
-    d, e, f = inv[1, 0], inv[1, 1], inv[1, 2]
-    return img.transform(img.size, Image.AFFINE, (a, b, c, d, e, f), resample=Image.BICUBIC)
-
-arrow = make_arrow_image(320)
-def Tm(tx, ty): return np.array([[1,0,tx],[0,1,ty],[0,0,1]])
-def Rm(deg):
-    rad = np.deg2rad(deg); c,s = np.cos(rad), np.sin(rad)
-    return np.array([[c,-s,0],[s,c,0],[0,0,1]])
-def Sm(sx, sy): return np.array([[sx,0,0],[0,sy,0],[0,0,1]])
-def Hm(shx, shy): return np.array([[1,shx,0],[shy,1,0],[0,0,1]])
-
-M = Tm(15, -25) @ Rm(22) @ Hm(0.25, 0) @ Sm(0.95,0.95)
-trans_arrow = apply_affine_pil(arrow, M)
-
-col1, col2 = st.columns(2)
-col1.image(arrow, caption=get('mat_affine') + " — original", use_column_width=True)
-col2.image(trans_arrow, caption=get('mat_affine') + " — transformed", use_column_width=True)
-
-st.markdown(f"<div class='section'><h4>{get('conv')}</h4><p class='small-muted'>Convolution applies a kernel (small matrix) over an image. Examples: blur, sharpen, and edge detectors.</p></div>", unsafe_allow_html=True)
+st.markdown(f"<div class='section'><h4>{get('conv')}</h4><p class='small-muted'>Convolution applies a small kernel across an image to blur, sharpen, or detect edges. Try kernels in the Image Processing Tools page.</p></div>", unsafe_allow_html=True)
 
 kernels = {
     "Identity": np.array([[0,0,0],[0,1,0],[0,0,0]]),
