@@ -1,25 +1,44 @@
 import streamlit as st
-from PIL import Image, ImageFilter, ImageOps
+from PIL import Image
+import numpy as np
+import cv2
 
-st.title("Image Processing Tools")
+# Sidebar language (sama seperti home)
+language = st.sidebar.selectbox(
+    "Pilih Bahasa / Select Language / 选择语言",
+    ("Indonesia", "English", "中文")
+)
 
-uploaded_file = st.file_uploader("Upload an image (JPG/PNG)", type=["jpg","png","jpeg"])
-if uploaded_file:
-    img = Image.open(uploaded_file)
-    st.image(img, caption="Original Image", use_column_width=True)
+menu_items = {
+    "Indonesia": ["Home", "Image Tools", "Team"],
+    "English": ["Home", "Image Tools", "Team"],
+    "中文": ["主页", "图像工具", "团队"]
+}
 
-    st.sidebar.header("Transformasi & Filter")
-    operation = st.sidebar.selectbox("Pilih operasi", ["Rotate", "Grayscale", "Blur", "Invert"])
+selected_menu = st.sidebar.radio(
+    "Menu" if language=="English" else "菜单" if language=="中文" else "Menu",
+    menu_items[language]
+)
 
-    if operation == "Rotate":
-        angle = st.sidebar.slider("Sudut rotasi", 0, 360, 90)
-        transformed = img.rotate(angle)
-    elif operation == "Grayscale":
-        transformed = ImageOps.grayscale(img)
-    elif operation == "Blur":
-        radius = st.sidebar.slider("Radius blur", 1, 10, 2)
-        transformed = img.filter(ImageFilter.GaussianBlur(radius))
-    elif operation == "Invert":
-        transformed = ImageOps.invert(img.convert("RGB"))
+if selected_menu == menu_items[language][1]:
+    st.title("Image Tools" if language=="English" else
+             "图像工具" if language=="中文" else
+             "Image Tools")
 
-    st.image(transformed, caption=f"Transformed Image ({operation})", use_column_width=True)
+    uploaded_file = st.file_uploader("Upload Gambar / Upload Image / 上传图片", type=['png','jpg','jpeg'])
+    
+    if uploaded_file:
+        image = Image.open(uploaded_file)
+        st.image(image, caption="Original", use_column_width=True)
+        
+        st.subheader("Transformasi Matriks / Matrix Transformation / 矩阵变换")
+        rotate_angle = st.slider("Rotate (degree)" if language=="English" else
+                                 "旋转角度" if language=="中文" else
+                                 "Putar (derajat)", -180, 180, 0)
+        if st.button("Apply Transformation / 应用变换 / Terapkan"):
+            img_cv = np.array(image)
+            (h, w) = img_cv.shape[:2]
+            center = (w // 2, h // 2)
+            M = cv2.getRotationMatrix2D(center, rotate_angle, 1.0)
+            rotated = cv2.warpAffine(img_cv, M, (w, h))
+            st.image(rotated, caption="Transformed", use_column_width=True)
