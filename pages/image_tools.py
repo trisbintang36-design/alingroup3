@@ -3,7 +3,9 @@ from PIL import Image
 import numpy as np
 import cv2
 
-# Sidebar language (sama seperti home)
+# ========================
+# Sidebar Bahasa
+# ========================
 language = st.sidebar.selectbox(
     "Pilih Bahasa / Select Language / 选择语言",
     ("Indonesia", "English", "中文")
@@ -20,22 +22,28 @@ selected_menu = st.sidebar.radio(
     menu_items[language]
 )
 
+# ========================
+# Image Tools Page
+# ========================
 if selected_menu == menu_items[language][1]:
     st.title("Image Tools" if language=="English" else
              "图像工具" if language=="中文" else
              "Image Tools")
 
-    uploaded_file = st.file_uploader("Upload Gambar / Upload Image / 上传图片", type=['png','jpg','jpeg'])
-    
+    uploaded_file = st.file_uploader(
+        "Upload Gambar / Upload Image / 上传图片", type=['png','jpg','jpeg']
+    )
+
     if uploaded_file:
         image = Image.open(uploaded_file)
         st.image(image, caption="Original", use_column_width=True)
-        
-        st.subheader("Transformasi Matriks / Matrix Transformation / 矩阵变换")
-        rotate_angle = st.slider("Rotate (degree)" if language=="English" else
-                                 "旋转角度" if language=="中文" else
-                                 "Putar (derajat)", -180, 180, 0)
-        if st.button("Apply Transformation / 应用变换 / Terapkan"):
+
+        st.subheader("Transformasi / Transformation / 变换")
+        rotate_angle = st.slider(
+            "Rotate (degree) / 旋转角度 / Putar", -180, 180, 0
+        )
+
+        if st.button("Apply / 应用 / Terapkan"):
             img_cv = np.array(image)
             (h, w) = img_cv.shape[:2]
             center = (w // 2, h // 2)
