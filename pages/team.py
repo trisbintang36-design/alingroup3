@@ -5,8 +5,7 @@ from PIL import Image
 st.set_page_config(page_title="Team Members", layout="centered")
 PAGE_DIR = Path(__file__).parent
 
-# Sidebar top: Home title + Language with flags
-st.sidebar.title("Home")
+# Sidebar: language selector at the very top
 LANG_OPTIONS = [
     ("id", "🇮🇩 Bahasa Indonesia"),
     ("en", "🇺🇸 English"),
@@ -17,14 +16,11 @@ lang_keys = [k for k, _ in LANG_OPTIONS]
 lang_labels = {k: label for k, label in LANG_OPTIONS}
 lang = st.sidebar.selectbox("Language", options=lang_keys, index=1, format_func=lambda k: lang_labels[k])
 
+# After language selector, show Home title (capitalized)
+st.sidebar.title("Home")
+
 TEXT = {
     "title": {"en":"Team Members","id":"Anggota Tim","zh":"团队成员","ko":"팀원"},
-    "how_it_works": {
-        "en":"How the app works (short)",
-        "id":"Cara kerja aplikasi (singkat)",
-        "zh":"应用如何工作（简短）",
-        "ko":"앱 작동 방식 (간단히)"
-    },
     "note_photos": {
         "en":"Photos are loaded from assets/; replace files if you want to use different images.",
         "id":"Foto dimuat dari folder assets/; ganti file jika ingin menggunakan gambar lain.",
@@ -37,11 +33,11 @@ def t(k): return TEXT[k][lang]
 st.title(t("title"))
 st.markdown(t("note_photos"))
 
-# Candidate asset directories to search for images
+# Candidate asset directories
 candidates = [
-    PAGE_DIR / "assets",               # pages/assets
-    PAGE_DIR.parent / "assets",        # pages/../assets
-    Path.cwd() / "assets",             # project-root/assets
+    PAGE_DIR / "assets",
+    PAGE_DIR.parent / "assets",
+    Path.cwd() / "assets",
 ]
 
 def find_image(name_base: str):
@@ -99,13 +95,4 @@ for m in members:
         st.write(m["role"])
         st.markdown("---")
 
-st.header(t("how_it_works"))
-st.write(
-    """
-- Halaman Home: menjelaskan matematika di balik matriks affine dan kernel konvolusi, plus contoh visual berupa teks.
-- Halaman Image Processing Tools: unggah gambar, pilih parameter transformasi (translate/rotate/scale/shear) atau pilih/edit kernel konvolusi dan lihat preview.
-- Affine transforms dirangkai menjadi matriks 3x3 dan diterapkan menggunakan inverse mapping (PIL expects inverse).
-- Konvolusi diterapkan per-channel menggunakan scipy.ndimage.convolve, ada opsi normalisasi kernel.
-"""
-)
-st.info(TEXT["note_photos"]["en"] + " / " + TEXT["note_photos"]["id"])
+st.info(TEXT["note_photos"]["en"])
