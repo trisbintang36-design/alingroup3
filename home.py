@@ -1,7 +1,17 @@
 import streamlit as st
 
 # ========================
-# Sidebar Multi-bahasa
+# Theme Modern
+# ========================
+st.set_page_config(
+    page_title="Matrix & Image Processing App",
+    page_icon="🖼️",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# ========================
+# Sidebar Bahasa
 # ========================
 language = st.sidebar.selectbox(
     "Pilih Bahasa / Select Language / 选择语言",
@@ -20,17 +30,7 @@ selected_menu = st.sidebar.radio(
 )
 
 # ========================
-# Tema Modern
-# ========================
-st.set_page_config(
-    page_title="Matrix & Image Processing App",
-    page_icon="🖼️",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
-# ========================
-# Konten Home
+# Home Page
 # ========================
 if selected_menu == menu_items[language][0]:
     st.title("Matrix & Image Processing App" if language=="English" else
@@ -57,15 +57,13 @@ if selected_menu == menu_items[language][0]:
     """
     )
 
-    st.subheader("Contoh Transformasi Matriks" if language=="English" else
-                 "矩阵变换示例" if language=="中文" else
-                 "Contoh Transformasi Matriks")
-    st.write("Matriks Asli / Original Matrix / 原始矩阵")
+    st.subheader("Contoh Transformasi Matriks / Matrix Transformation / 矩阵变换")
+    st.write("Matriks Asli / Original / 原始矩阵")
     st.write([[1,2],[3,4]])
     st.write("Transpose / 转置 / Transpose")
     st.write([[1,3],[2,4]])
 
-    st.subheader("Contoh Convolution / 卷积示例 / Example Convolution")
-    st.write("Kernel 3x3 sederhana untuk sharpen / 简单3x3锐化卷积核 / Simple 3x3 sharpen kernel")
+    st.subheader("Contoh Convolution / Convolution Example / 卷积示例")
+    st.write("Kernel 3x3 untuk sharpen / 3x3 kernel to sharpen / 3x3锐化卷积核")
     st.write([[0,-1,0],[-1,5,-1],[0,-1,0]])
-    st.write("Convolution meningkatkan ketajaman gambar / 卷积提升图像锐度 / Convolution sharpens image")
+    st.write("Convolution meningkatkan ketajaman gambar / Convolution sharpens image / 卷积提升图像锐度")
