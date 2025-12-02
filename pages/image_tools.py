@@ -2,14 +2,11 @@ import streamlit as st
 from PIL import Image
 import numpy as np
 import io
-from scipy import ndimage
 from pathlib import Path
 
 st.set_page_config(page_title="Image Processing Tools", layout="wide")
-PAGE_DIR = Path(__file__).parent
 
-# Sidebar: Home title + Language with flags (at top)
-st.sidebar.title("Home")
+# --- Sidebar: language selector at the very top ---
 LANG_OPTIONS = [
     ("id", "🇮🇩 Bahasa Indonesia"),
     ("en", "🇺🇸 English"),
@@ -20,6 +17,10 @@ lang_keys = [k for k, _ in LANG_OPTIONS]
 lang_labels = {k: label for k, label in LANG_OPTIONS}
 lang = st.sidebar.selectbox("Language", options=lang_keys, index=1, format_func=lambda k: lang_labels[k])
 
+# After language selector, ensure sidebar Home title (capitalized)
+st.sidebar.title("Home")
+
+# Localized strings
 T = {
     "title": {"en":"Image Processing Tools","id":"Alat Pengolahan Gambar","zh":"图像处理工具","ko":"이미지 처리 도구"},
     "upload": {"en":"Upload an image (png/jpg/bmp)","id":"Unggah gambar (png/jpg/bmp)","zh":"上传图像 (png/jpg/bmp)","ko":"이미지 업로드 (png/jpg/bmp)"},
@@ -46,7 +47,7 @@ if not uploaded:
 
 if uploaded:
     img = Image.open(uploaded).convert("RGB")
-    st.sidebar.header(get("mode"))
+    st.sidebar.header(get("mode"))  # capitalized Mode
     mode = st.sidebar.radio("", [get("transformations"), get("filters")])
 
     col_orig, col_proc = st.columns([1,1])
@@ -60,7 +61,7 @@ if uploaded:
         return img.transform(img.size, Image.AFFINE, (a, b, c, d, e, f), resample=Image.BICUBIC)
 
     if mode == get("transformations"):
-        st.sidebar.subheader("Affine parameters")
+        st.sidebar.subheader("Affine Parameters")  # capitalized
         tx = st.sidebar.slider("Translate X (px)", -300, 300, 0)
         ty = st.sidebar.slider("Translate Y (px)", -300, 300, 0)
         angle = st.sidebar.slider("Rotation (deg)", -180, 180, 0)
@@ -68,10 +69,9 @@ if uploaded:
         sy = st.sidebar.slider("Scale Y", 0.1, 3.0, 1.0, 0.05)
         shx = st.sidebar.slider("Shear X", -1.0, 1.0, 0.0, 0.01)
         shy = st.sidebar.slider("Shear Y", -1.0, 1.0, 0.0, 0.01)
-        center = st.sidebar.checkbox("Rotate about image center", value=True)
+        center = st.sidebar.checkbox("Rotate About Image Center", value=True)
 
-        st.markdown("Affine transform explanation:")
-        st.write("An affine transform composes translation, rotation, scaling and shear into a single 3x3 matrix. The app composes these and applies via inverse mapping (no arrow image here — explanation only).")
+        st.markdown("An affine transform composes translation, rotation, scaling and shear into a single 3×3 matrix. This app composes and applies it using inverse mapping (no arrow image — explanation only).")
 
         def T(tx, ty): return np.array([[1,0,tx],[0,1,ty],[0,0,1]])
         def R(deg):
@@ -109,7 +109,7 @@ if uploaded:
         elif filter_choice == "Sobel Y":
             kernel = np.array([[-1,-2,-1],[0,0,0],[1,2,1]])
         else:
-            st.sidebar.markdown("Edit 3x3 kernel values")
+            st.sidebar.markdown("Edit 3x3 Kernel Values")
             vals = []
             for r in range(3):
                 cols = st.sidebar.columns(3)
@@ -120,7 +120,7 @@ if uploaded:
                 vals.append(row)
             kernel = np.array(vals, dtype=float)
 
-        normalize = st.sidebar.checkbox("Normalize kernel (sum to 1)", value=("Box blur" in filter_choice or "Gaussian" in filter_choice))
+        normalize = st.sidebar.checkbox("Normalize Kernel (sum to 1)", value=("Box blur" in filter_choice or "Gaussian" in filter_choice))
         if normalize:
             s = kernel.sum()
             if s != 0:
@@ -129,14 +129,33 @@ if uploaded:
         st.sidebar.write("Kernel:")
         st.sidebar.write(kernel)
 
+        # Try to use scipy.ndimage if available, otherwise fallback to numpy loops
+        try:
+            from scipy import ndimage
+            def convolve_channel(arr, kernel):
+                return ndimage.convolve(arr, kernel, mode='reflect')
+            SCIPY = True
+        except Exception:
+            SCIPY = False
+            def convolve_channel(arr, kernel):
+                kh, kw = kernel.shape
+                pad_h, pad_w = kh//2, kw//2
+                arr_p = np.pad(arr, ((pad_h, pad_h), (pad_w, pad_w)), mode='reflect')
+                out = np.zeros_like(arr)
+                for i in range(out.shape[0]):
+                    for j in range(out.shape[1]):
+                        region = arr_p[i:i+kh, j:j+kw]
+                        out[i, j] = np.sum(region * kernel)
+                return out
+
         arr = np.asarray(img).astype(np.float32)
         if arr.ndim == 3:
             out = np.zeros_like(arr)
             for ch in range(arr.shape[2]):
-                out[:,:,ch] = ndimage.convolve(arr[:,:,ch], kernel, mode='reflect')
+                out[:,:,ch] = convolve_channel(arr[:,:,ch], kernel)
             out = np.clip(out, 0, 255).astype(np.uint8)
         else:
-            out = ndimage.convolve(arr, kernel, mode='reflect')
+            out = convolve_channel(arr, kernel)
             out = np.clip(out, 0, 255).astype(np.uint8)
 
         processed = Image.fromarray(out)
