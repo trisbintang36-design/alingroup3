@@ -5,7 +5,6 @@ from numpy.lib.stride_tricks import sliding_window_view
 
 # --- Language selection ---
 LANG_OPTIONS = {"English": "en", "Bahasa Indonesia": "id"}
-default_lang = "Bahasa Indonesia"
 lang_choice = st.sidebar.selectbox("Language / Bahasa", list(LANG_OPTIONS.keys()), index=0)
 lang = LANG_OPTIONS[lang_choice]
 
@@ -60,9 +59,39 @@ TEXT = {
 }
 
 t = TEXT[lang]
-st.set_page_config(page_title=t["page_title"], layout="wide")
-st.title(t["title"])
-st.markdown(t["lead"])
+st.set_page_config(page_title=t["page_title"], layout="wide", initial_sidebar_state="expanded")
+
+# --- Futuristic CSS (same visual theme as home) ---
+def inject_futuristic_css():
+    css = """
+    <style>
+    :root{
+      --bg-1: #040812;
+      --bg-2: #071226;
+      --accent: #00ffe1;
+      --accent-2: #8a2be2;
+    }
+    [data-testid="stAppViewContainer"] > .main {
+      background: linear-gradient(135deg, #030612 0%, #00121a 60%);
+      color: #cfeef4;
+      min-height: 100vh;
+    }
+    [data-testid="stSidebar"] {
+      background: linear-gradient(180deg, rgba(7,18,38,0.95), rgba(2,10,20,0.95));
+      color: #cfeef4;
+    }
+    h1,h2,h3 { color: var(--accent); text-shadow: 0 0 8px rgba(0,255,225,0.08); }
+    .neon-box { background: rgba(255,255,255,0.02); padding:10px; border-radius:10px; border:1px solid rgba(0,255,225,0.04); }
+    .stButton>button { background: linear-gradient(90deg,#00ffe1,#8a2be2); color:#021018; border-radius:10px; }
+    .stImage>div>img { box-shadow: 0 10px 40px rgba(0,0,0,0.6); border-radius:6px; }
+    </style>
+    """
+    st.markdown(css, unsafe_allow_html=True)
+
+inject_futuristic_css()
+
+st.title(f"<span style='color:#00ffe1'>{t['title']}</span>", unsafe_allow_html=True)
+st.markdown(f"<div class='neon-box'>{t['lead']}</div>", unsafe_allow_html=True)
 
 # --- helpers (cv2-free) ---
 def load_image_to_array(uploaded_file):
@@ -76,18 +105,18 @@ def pil_from_array(arr):
     return Image.fromarray(arr)
 
 def generate_demo_array(size=512):
-    img = Image.new("RGB", (size, size), (255, 255, 255))
+    img = Image.new("RGB", (size, size), (10, 18, 30))
     draw = ImageDraw.Draw(img)
     step = max(8, size // 8)
     for i in range(0, size, step):
-        draw.line([(i,0), (i,size)], fill=(220,220,220), width=1)
-        draw.line([(0,i), (size,i)], fill=(220,220,220), width=1)
-    draw.text((size//6, size//2 - 30), "DEMO", fill=(10,10,200))
+        draw.line([(i,0), (i,size)], fill=(30,40,60), width=1)
+        draw.line([(0,i), (size,i)], fill=(30,40,60), width=1)
+    draw.text((size//6, size//2 - 30), "DEMO", fill=(0,255,225))
     return np.array(img)
 
 def rotate_array(arr, angle):
     pil = pil_from_array(arr)
-    return np.array(pil.rotate(angle, resample=Image.BICUBIC, expand=False, fillcolor=(255,255,255)))
+    return np.array(pil.rotate(angle, resample=Image.BICUBIC, expand=False, fillcolor=(10,18,30)))
 
 def scale_array(arr, scale_factor):
     h, w = arr.shape[:2]
@@ -95,7 +124,7 @@ def scale_array(arr, scale_factor):
     new_h = max(1, int(h * scale_factor))
     pil = pil_from_array(arr)
     scaled = pil.resize((new_w, new_h), resample=Image.BICUBIC)
-    canvas = Image.new("RGB", (w, h), (255,255,255))
+    canvas = Image.new("RGB", (w, h), (10,18,30))
     paste_x = max(0, (w - new_w)//2)
     paste_y = max(0, (h - new_h)//2)
     canvas.paste(scaled, (paste_x, paste_y))
@@ -103,9 +132,8 @@ def scale_array(arr, scale_factor):
 
 def translate_array(arr, tx, ty):
     pil = pil_from_array(arr)
-    # ImageOps.offset is not available; use transform with translation
     w, h = pil.size
-    return np.array(pil.transform((w, h), Image.AFFINE, (1, 0, tx, 0, 1, ty), resample=Image.BICUBIC, fillcolor=(255,255,255)))
+    return np.array(pil.transform((w, h), Image.AFFINE, (1, 0, tx, 0, 1, ty), resample=Image.BICUBIC, fillcolor=(10,18,30)))
 
 def shear_array(arr, shear_x=0.0, shear_y=0.0):
     pil = pil_from_array(arr)
@@ -116,7 +144,7 @@ def shear_array(arr, shear_x=0.0, shear_y=0.0):
     d = shear_y
     e = 1.0
     f = 0.0
-    return np.array(pil.transform((w, h), Image.AFFINE, (a, b, c, d, e, f), resample=Image.BICUBIC, fillcolor=(255,255,255)))
+    return np.array(pil.transform((w, h), Image.AFFINE, (a, b, c, d, e, f), resample=Image.BICUBIC, fillcolor=(10,18,30)))
 
 def flip_array(arr, mode):
     pil = pil_from_array(arr)
