@@ -1,24 +1,25 @@
 import streamlit as st
-from PIL import Image
+from PIL import Image, ImageFilter, ImageOps
 
-st.title("Team Members")
+st.title("Image Processing Tools")
 
-members = [
-    {"name":"Alice", "photo":"images/alice.jpg", "role":"Project lead & matrix explanation"},
-    {"name":"Bob", "photo":"images/bob.jpg", "role":"Image processing & coding"},
-    {"name":"Charlie", "photo":"images/charlie.jpg", "role":"App deployment & documentation"},
-]
+uploaded_file = st.file_uploader("Upload an image (JPG/PNG)", type=["jpg","png","jpeg"])
+if uploaded_file:
+    img = Image.open(uploaded_file)
+    st.image(img, caption="Original Image", use_column_width=True)
 
-for m in members:
-    st.subheader(m["name"])
-    img = Image.open(m["photo"])
-    st.image(img, width=255)
-    st.write(m["role"])
+    st.sidebar.header("Transformasi & Filter")
+    operation = st.sidebar.selectbox("Pilih operasi", ["Rotate", "Grayscale", "Blur", "Invert"])
 
-st.markdown("""
-### How the App Works
-1. Upload an image in the **Image Processing Tools** page.
-2. Pilih transformasi atau filter dari sidebar.
-3. Preview gambar asli vs hasil transformasi.
-4. Pelajari transformasi matriks dan convolution di halaman **Home**.
-""")
+    if operation == "Rotate":
+        angle = st.sidebar.slider("Sudut rotasi", 0, 360, 90)
+        transformed = img.rotate(angle)
+    elif operation == "Grayscale":
+        transformed = ImageOps.grayscale(img)
+    elif operation == "Blur":
+        radius = st.sidebar.slider("Radius blur", 1, 10, 2)
+        transformed = img.filter(ImageFilter.GaussianBlur(radius))
+    elif operation == "Invert":
+        transformed = ImageOps.invert(img.convert("RGB"))
+
+    st.image(transformed, caption=f"Transformed Image ({operation})", use_column_width=True)
