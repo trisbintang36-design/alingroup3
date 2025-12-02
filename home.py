@@ -6,38 +6,7 @@ from pathlib import Path
 st.set_page_config(page_title="Matrix & Convolution Playground", layout="wide")
 BASE_DIR = Path(__file__).parent
 
-# Simple futuristic CSS
-FUTURE_CSS = """
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;600&display=swap');
-html, body, [class*="css"]  {
-    font-family: 'Inter', sans-serif;
-}
-.main {
-    background: linear-gradient(135deg, rgba(10,10,30,0.95) 0%, rgba(18,11,43,0.9) 40%, rgba(6,12,34,0.92) 100%);
-    color: #E6F0FF;
-    padding: 1rem 2rem;
-    border-radius: 12px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.6);
-}
-h1, .stTitle {
-    font-family: 'Orbitron', sans-serif;
-    color: #D7F0FF;
-    text-shadow: 0 2px 10px rgba(0,200,255,0.08);
-}
-.section {
-    background: rgba(255,255,255,0.03);
-    padding: 12px;
-    border-radius: 8px;
-    margin-bottom: 12px;
-}
-.small-muted {color: #bcd6ff; font-size:0.95rem;}
-</style>
-"""
-st.markdown(FUTURE_CSS, unsafe_allow_html=True)
-
-# --- Sidebar top: Home title + Language selector with flags ---
-st.sidebar.title("Home")  # perbaikan kapitalisasi seperti permintaan
+# --- Top-of-sidebar language selector (always at very top) ---
 LANG_OPTIONS = [
     ("id", "🇮🇩 Bahasa Indonesia"),
     ("en", "🇺🇸 English"),
@@ -46,11 +15,13 @@ LANG_OPTIONS = [
 ]
 lang_keys = [k for k, _ in LANG_OPTIONS]
 lang_labels = {k: label for k, label in LANG_OPTIONS}
-# Use selectbox but show flags in the display
-default_index = 1 if "en" in lang_keys else 0
-lang = st.sidebar.selectbox("Language", options=lang_keys, index=default_index, format_func=lambda k: lang_labels[k])
+# Put language selector first in sidebar
+lang = st.sidebar.selectbox("Language", options=lang_keys, index=1, format_func=lambda k: lang_labels[k])
 
-# --- Translations small table ---
+# After language selector, show Home title (capitalized)
+st.sidebar.title("Home")
+
+# Simple translations
 T = {
     "title": {
         "en": "Matrix & Convolution Playground",
@@ -92,27 +63,25 @@ T = {
 get = lambda k: T[k][lang]
 
 # --- Page content ---
-st.markdown(f"<div class='main'><h1>{get('title')}</h1><p class='small-muted'>{get('desc')}</p></div>", unsafe_allow_html=True)
-st.markdown(f"<div class='section'><h3>{get('quick_primer')}</h3></div>", unsafe_allow_html=True)
+st.title(get("title"))
+st.markdown(get("desc"))
 
-# Transform explanation only (removed arrow image as requested)
-st.markdown(f"<div class='section'><h4>{get('mat_affine')}</h4>"
-            "<p class='small-muted'>"
-            "An affine transform is represented by a 3×3 matrix that maps coordinates [x, y, 1] → [x', y', 1]. "
-            "It composes translation, rotation, scaling, and shear. In practice we build a single matrix by composing these components and apply it to image coordinates using an inverse mapping (PIL/other libraries expect the inverse affine coefficients)."
-            "</p></div>", unsafe_allow_html=True)
+st.header(get("quick_primer"))
 
-st.markdown(f"<div class='section'><h4>{get('conv')}</h4><p class='small-muted'>Convolution applies a small kernel across an image to blur, sharpen, or detect edges. Try kernels in the Image Processing Tools page.</p></div>", unsafe_allow_html=True)
+st.subheader(get("mat_affine"))
+st.write({
+    "en": "An affine transform is represented by a 3×3 matrix that maps coordinates [x, y, 1] → [x', y', 1]. It composes translation, rotation, scaling, and shear.",
+    "id": "Transformasi affine direpresentasikan oleh matriks 3×3 yang memetakan koordinat [x, y, 1] → [x', y', 1]. Terdiri dari translasi, rotasi, skala, dan shear.",
+    "zh": "仿射变换由一个 3×3 矩阵表示，将坐标 [x, y, 1] 映射为 [x', y', 1]。它由平移、旋转、缩放和剪切组成。",
+    "ko": "어파인 변환은 3×3 행렬로 표현되며 좌표 [x, y, 1] 를 [x', y', 1] 로 매핑합니다. 평행이동, 회전, 스케일, 전단으로 구성됩니다."
+}[lang])
 
-kernels = {
-    "Identity": np.array([[0,0,0],[0,1,0],[0,0,0]]),
-    "Box blur (3x3)": np.ones((3,3))/9.0,
-    "Sharpen": np.array([[0,-1,0],[-1,5,-1],[0,-1,0]]),
-    "Sobel X (edge)": np.array([[-1,0,1],[-2,0,2],[-1,0,1]]),
-}
-st.markdown("<div class='section'><strong class='small-muted'>Sample kernels</strong></div>", unsafe_allow_html=True)
-for name, K in kernels.items():
-    st.write(f"**{name}**")
-    st.write(K)
+st.subheader(get("conv"))
+st.write({
+    "en": "Convolution applies a small kernel across image pixels to blur, sharpen, or detect edges. Try kernels in the Image Processing Tools page.",
+    "id": "Konvolusi menerapkan kernel kecil pada piksel gambar untuk blur, sharpen, atau deteksi tepi. Coba kernel di halaman Image Processing Tools.",
+    "zh": "卷积在图像像素上应用小核以实现模糊、锐化或边缘检测。请在“图像处理工具”页面尝试这些核。",
+    "ko": "컨볼루션은 이미지를 흐리게 하거나 선명하게 하거나 에지 검출을 위해 작은 커널을 적용합니다. 'Image Processing Tools' 페이지에서 시도해 보세요."
+}[lang])
 
-st.info(get('goto_tools'))
+st.info(get("goto_tools"))
