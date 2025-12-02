@@ -1,15 +1,70 @@
 import streamlit as st
-from PIL import Image, ImageOps, ImageDraw, ImageFilter, ImageChops
+from PIL import Image, ImageOps, ImageDraw
 import numpy as np
 from numpy.lib.stride_tricks import sliding_window_view
-import io
 
-st.set_page_config(page_title="Matrix & Convolution — Tools (no cv2)", layout="wide")
+# --- Language selection ---
+LANG_OPTIONS = {"English": "en", "Bahasa Indonesia": "id"}
+default_lang = "Bahasa Indonesia"
+lang_choice = st.sidebar.selectbox("Language / Bahasa", list(LANG_OPTIONS.keys()), index=0)
+lang = LANG_OPTIONS[lang_choice]
 
-st.title("Image Processing Tools (cv2-free)")
-st.markdown("Upload gambar atau gunakan demo. Pilih transformasi atau filter di sidebar. Versi ini tidak membutuhkan OpenCV.")
+# --- Translations ---
+TEXT = {
+    "en": {
+        "page_title": "Image Processing Tools",
+        "title": "Image Processing Tools",
+        "lead": "Upload an image or use the demo. Choose transformation or filter in the sidebar. Preview Original vs Transformed.",
+        "upload": "Upload image (jpg/png). If empty, demo will be used.",
+        "tools": "Tool selection",
+        "affine": "Affine Transformations",
+        "flip": "Flip",
+        "conv": "Convolution / Filters",
+        "rotation": "Rotation (deg)",
+        "scale": "Scale",
+        "translate_x": "Translate X (px)",
+        "translate_y": "Translate Y (px)",
+        "shear_x": "Shear X",
+        "shear_y": "Shear Y",
+        "original": "Original",
+        "transformed": "Transformed",
+        "flip_mode": "Mode",
+        "filter_selection": "Filter selection",
+        "custom_kernel_help": "Enter kernel as rows separated by ';' and values by commas. Example: 0,-1,0; -1,5,-1; 0,-1,0",
+        "normalize": "Normalize kernel (sum -> 1) if possible",
+        "tip": "Tip: Use medium-size images (<= 1024 px) for best responsiveness."
+    },
+    "id": {
+        "page_title": "Alat Pengolahan Citra",
+        "title": "Alat Pengolahan Citra",
+        "lead": "Unggah gambar atau gunakan demo. Pilih transformasi atau filter di sidebar. Pratinjau Asli vs Hasil.",
+        "upload": "Unggah gambar (jpg/png). Jika kosong, demo akan digunakan.",
+        "tools": "Pemilihan alat",
+        "affine": "Transformasi Affine",
+        "flip": "Flip",
+        "conv": "Konvolusi / Filter",
+        "rotation": "Rotasi (deg)",
+        "scale": "Skala",
+        "translate_x": "Translasi X (px)",
+        "translate_y": "Translasi Y (px)",
+        "shear_x": "Shear X",
+        "shear_y": "Shear Y",
+        "original": "Asli",
+        "transformed": "Hasil",
+        "flip_mode": "Mode",
+        "filter_selection": "Pemilihan filter",
+        "custom_kernel_help": "Masukkan kernel sebagai baris dipisah ';' dan nilai dipisah koma. Contoh: 0,-1,0; -1,5,-1; 0,-1,0",
+        "normalize": "Normalisasi kernel (jumlah -> 1) jika memungkinkan",
+        "tip": "Tip: Gunakan gambar ukuran sedang (<= 1024 px) untuk respons terbaik."
+    }
+}
 
-# --- Helpers ---
+t = TEXT[lang]
+st.set_page_config(page_title=t["page_title"], layout="wide")
+st.title(t["title"])
+st.markdown(t["lead"])
+
+# --- helpers (cv2-free) ---
 def load_image_to_array(uploaded_file):
     if uploaded_file is None:
         return None
@@ -25,16 +80,14 @@ def generate_demo_array(size=512):
     draw = ImageDraw.Draw(img)
     step = max(8, size // 8)
     for i in range(0, size, step):
-        draw.line([(i, 0), (i, size)], fill=(220, 220, 220), width=1)
-        draw.line([(0, i), (size, i)], fill=(220, 220, 220), width=1)
+        draw.line([(i,0), (i,size)], fill=(220,220,220), width=1)
+        draw.line([(0,i), (size,i)], fill=(220,220,220), width=1)
     draw.text((size//6, size//2 - 30), "DEMO", fill=(10,10,200))
     return np.array(img)
 
-# --- Transform primitives (PIL-based) ---
 def rotate_array(arr, angle):
     pil = pil_from_array(arr)
-    rotated = pil.rotate(angle, resample=Image.BICUBIC, expand=False, fillcolor=(255,255,255))
-    return np.array(rotated)
+    return np.array(pil.rotate(angle, resample=Image.BICUBIC, expand=False, fillcolor=(255,255,255)))
 
 def scale_array(arr, scale_factor):
     h, w = arr.shape[:2]
@@ -50,38 +103,20 @@ def scale_array(arr, scale_factor):
 
 def translate_array(arr, tx, ty):
     pil = pil_from_array(arr)
-    # ImageChops.offset shifts image; positive tx moves right, positive ty moves down
-    shifted = ImageChops.offset(pil, tx, ty)
-    # fill exposed area with white
-    if tx > 0:
-        draw = ImageDraw.Draw(shifted)
-        draw.rectangle([0, 0, tx-1, pil.height], fill=(255,255,255))
-    elif tx < 0:
-        draw = ImageDraw.Draw(shifted)
-        draw.rectangle([pil.width + tx, 0, pil.width-1, pil.height], fill=(255,255,255))
-    if ty > 0:
-        draw = ImageDraw.Draw(shifted)
-        draw.rectangle([0, 0, pil.width, ty-1], fill=(255,255,255))
-    elif ty < 0:
-        draw = ImageDraw.Draw(shifted)
-        draw.rectangle([0, pil.height + ty, pil.width, pil.height-1], fill=(255,255,255))
-    return np.array(shifted)
+    # ImageOps.offset is not available; use transform with translation
+    w, h = pil.size
+    return np.array(pil.transform((w, h), Image.AFFINE, (1, 0, tx, 0, 1, ty), resample=Image.BICUBIC, fillcolor=(255,255,255)))
 
 def shear_array(arr, shear_x=0.0, shear_y=0.0):
     pil = pil_from_array(arr)
     w, h = pil.size
-    # PIL affine expects a 6-tuple (a, b, c, d, e, f) mapping:
-    # x_in = a*x_out + b*y_out + c
-    # y_in = d*x_out + e*y_out + f
-    # For a shear on X by shx: matrix [[1, shx], [0,1]]
     a = 1.0
     b = shear_x
     c = 0.0
     d = shear_y
     e = 1.0
     f = 0.0
-    sheared = pil.transform((w, h), Image.AFFINE, (a, b, c, d, e, f), resample=Image.BICUBIC, fillcolor=(255,255,255))
-    return np.array(sheared)
+    return np.array(pil.transform((w, h), Image.AFFINE, (a, b, c, d, e, f), resample=Image.BICUBIC, fillcolor=(255,255,255)))
 
 def flip_array(arr, mode):
     pil = pil_from_array(arr)
@@ -90,10 +125,8 @@ def flip_array(arr, mode):
     elif mode == "Vertical":
         return np.array(pil.transpose(Image.FLIP_TOP_BOTTOM))
     else:
-        # both
         return np.array(pil.transpose(Image.FLIP_LEFT_RIGHT).transpose(Image.FLIP_TOP_BOTTOM))
 
-# --- Convolution using numpy sliding_window_view ---
 def apply_convolution_array(arr, kernel, normalize=True):
     k = np.array(kernel, dtype=np.float32)
     kh, kw = k.shape
@@ -106,7 +139,6 @@ def apply_convolution_array(arr, kernel, normalize=True):
     if arr.ndim == 2:
         padded = np.pad(arr, ((pad_h, pad_h), (pad_w, pad_w)), mode='edge')
         patches = sliding_window_view(padded, (kh, kw))
-        # patches shape (H, W, kh, kw)
         out = np.tensordot(patches, k, axes=([2,3],[0,1]))
         return np.clip(out, 0, 255).astype(np.uint8)
     else:
@@ -134,23 +166,23 @@ def predefined_kernels():
     }
 
 # --- UI ---
-uploaded = st.file_uploader("Upload image (jpg/png). Jika kosong, demo akan digunakan.", type=["jpg","jpeg","png"])
+uploaded = st.file_uploader(t["upload"], type=["jpg","jpeg","png"])
 if uploaded:
     img_arr = load_image_to_array(uploaded)
 else:
     img_arr = generate_demo_array(512)
 
-st.sidebar.header("Tool selection")
-tool = st.sidebar.radio("Pilih:", ["Affine Transformations", "Flip", "Convolution / Filters"])
+st.sidebar.header(t["tools"])
+tool = st.sidebar.radio("", [t["affine"], t["flip"], t["conv"]])
 
-if tool == "Affine Transformations":
-    st.sidebar.subheader("Affine parameters")
-    angle = st.sidebar.slider("Rotation (deg)", -180, 180, 0)
-    scale = st.sidebar.slider("Scale", 0.1, 3.0, 1.0, 0.1)
-    tx = st.sidebar.slider("Translate X (px)", -300, 300, 0)
-    ty = st.sidebar.slider("Translate Y (px)", -300, 300, 0)
-    shear_x = st.sidebar.slider("Shear X", -1.0, 1.0, 0.0, 0.01)
-    shear_y = st.sidebar.slider("Shear Y", -1.0, 1.0, 0.0, 0.01)
+if tool == t["affine"]:
+    st.sidebar.subheader(t["affine"])
+    angle = st.sidebar.slider(t["rotation"], -180, 180, 0)
+    scale = st.sidebar.slider(t["scale"], 0.1, 3.0, 1.0, 0.1)
+    tx = st.sidebar.slider(t["translate_x"], -300, 300, 0)
+    ty = st.sidebar.slider(t["translate_y"], -300, 300, 0)
+    shear_x = st.sidebar.slider(t["shear_x"], -1.0, 1.0, 0.0, 0.01)
+    shear_y = st.sidebar.slider(t["shear_y"], -1.0, 1.0, 0.0, 0.01)
 
     transformed = img_arr.copy()
     transformed = scale_array(transformed, scale)
@@ -160,51 +192,51 @@ if tool == "Affine Transformations":
 
     col_o, col_t = st.columns(2)
     with col_o:
-        st.subheader("Original")
+        st.subheader(t["original"])
         st.image(pil_from_array(img_arr), use_column_width=True)
     with col_t:
-        st.subheader("Transformed")
+        st.subheader(t["transformed"])
         st.image(pil_from_array(transformed), use_column_width=True)
 
-elif tool == "Flip":
-    st.sidebar.subheader("Flip options")
-    flip_mode = st.sidebar.selectbox("Mode", ["Horizontal", "Vertical", "Both"])
+elif tool == t["flip"]:
+    st.sidebar.subheader(t["flip"])
+    flip_mode = st.sidebar.selectbox(t["flip_mode"], ["Horizontal", "Vertical", "Both"])
     transformed = flip_array(img_arr, flip_mode)
     col_o, col_t = st.columns(2)
     with col_o:
-        st.subheader("Original")
+        st.subheader(t["original"])
         st.image(pil_from_array(img_arr), use_column_width=True)
     with col_t:
-        st.subheader(f"Flipped: {flip_mode}")
+        st.subheader(f"{t['transformed']}: {flip_mode}")
         st.image(pil_from_array(transformed), use_column_width=True)
 
 else:
-    st.sidebar.subheader("Filter selection")
+    st.sidebar.subheader(t["filter_selection"])
     kernels = predefined_kernels()
     choices = list(kernels.keys()) + ["Custom"]
-    sel = st.sidebar.selectbox("Kernel", choices)
+    sel = st.sidebar.selectbox("", choices)
     if sel == "Custom":
-        st.sidebar.markdown("Masukkan kernel sebagai rows dipisah ';' dan nilai dipisah koma. Contoh: 0,-1,0; -1,5,-1; 0,-1,0")
+        st.sidebar.markdown(t["custom_kernel_help"])
         custom = st.sidebar.text_area("Custom kernel", "0,-1,0; -1,5,-1; 0,-1,0")
         try:
             rows = [r.strip() for r in custom.split(";") if r.strip()!=""]
             kernel = np.array([[float(x) for x in row.split(",")] for row in rows], dtype=np.float32)
         except Exception:
-            st.sidebar.error("Format kernel salah. Gunakan contoh di atas.")
+            st.sidebar.error("Invalid kernel format.")
             kernel = kernels["sharpen"]
     else:
         kernel = kernels[sel]
 
-    normalize = st.sidebar.checkbox("Normalize kernel (sum -> 1) jika memungkinkan", value=True)
+    normalize = st.sidebar.checkbox(t["normalize"], value=True)
     transformed = apply_convolution_array(img_arr, kernel, normalize=normalize)
 
     col_o, col_t = st.columns(2)
     with col_o:
-        st.subheader("Original")
+        st.subheader(t["original"])
         st.image(pil_from_array(img_arr), use_column_width=True)
     with col_t:
-        st.subheader(f"Filtered: {sel}")
+        st.subheader(f"{t['transformed']}: {sel}")
         st.image(pil_from_array(transformed), use_column_width=True)
 
 st.markdown("---")
-st.caption("Versi ini tidak memerlukan OpenCV. Jika Anda lebih suka versi berbasis OpenCV, pasang paket opencv-python(-headless) dan gunakan file image_tools yang memakai cv2.")
+st.caption(t["tip"])
