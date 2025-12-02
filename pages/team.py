@@ -108,7 +108,5 @@ for member in team:
         st.markdown("Singkat: Berkontribusi dalam proyek survei, pembersihan data, analisis, visualisasi, dan pembuatan dashboard Streamlit.")
     st.markdown("---")
 
-st.markdown(
-    "- Letakkan foto dengan nama tris.jpg, fia.jpg, gina.jpg, fasya.jpg di folder 'images/' (relative path dari root proyek).\n"
-    "- Jika Anda ingin fitur upload atau pengaturan folder nanti, saya bisa tambahkan kembali atas permintaan."
 )
+
