@@ -57,9 +57,101 @@ TEXT = {
 
 t = TEXT[lang]
 
-st.set_page_config(page_title=t["page_title"], layout="wide")
-st.title(t["title"])
-st.markdown(t["lead"])
+st.set_page_config(page_title=t["page_title"], layout="wide", initial_sidebar_state="expanded")
+
+# --- Futuristic theme CSS + header ---
+def inject_futuristic_css():
+    css = """
+    <style>
+    :root{
+      --bg-1: #040812;
+      --bg-2: #071226;
+      --panel: rgba(255,255,255,0.03);
+      --accent: #00ffe1;
+      --accent-2: #8a2be2;
+      --muted: #9aa8b2;
+    }
+    [data-testid="stAppViewContainer"] > .main {
+      background: linear-gradient(135deg, var(--bg-1) 0%, #00121a 40%, #001824 100%);
+      color: #cfeef4;
+      min-height: 100vh;
+      padding-top: 12px;
+    }
+    header[data-testid="stHeader"] {visibility: hidden;}
+    footer {visibility: hidden;}
+    /* Sidebar */
+    [data-testid="stSidebar"] {
+      background: linear-gradient(180deg, rgba(7,18,38,0.9), rgba(2,10,20,0.8));
+      box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+      color: #cfeef4;
+    }
+    .css-1d391kg { background: transparent; } /* attempt to reduce white cards */
+    /* Neon headings */
+    h1, h2, h3 {
+      color: var(--accent);
+      text-shadow: 0 0 8px rgba(0,255,225,0.12), 0 0 18px rgba(138,43,226,0.06);
+      font-family: "Segoe UI", Roboto, sans-serif;
+    }
+    .stMarkdown p, .stText {
+      color: #cfeef4;
+    }
+    .neon-box {
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 6px 30px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
+      border: 1px solid rgba(0,255,225,0.06);
+    }
+    .accent-pill {
+      display:inline-block;
+      padding:6px 12px;
+      border-radius:20px;
+      background: linear-gradient(90deg, rgba(0,255,225,0.12), rgba(138,43,226,0.08));
+      color: var(--accent);
+      font-weight:600;
+    }
+    /* Buttons */
+    .stButton>button {
+      background: linear-gradient(90deg, #00ffe1, #8a2be2);
+      color: #021018;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 10px;
+    }
+    /* Make images have subtle glow */
+    .stImage>div>img {
+      box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.03);
+    }
+    </style>
+    """
+    st.markdown(css, unsafe_allow_html=True)
+
+def inject_header_bar():
+    header_html = f"""
+    <div style="display:flex;align-items:center;gap:16px;padding:12px;border-radius:10px;margin-bottom:12px;">
+      <div style="width:56px;height:56px;border-radius:12px;
+                  background:linear-gradient(135deg,#00ffe1,#8a2be2);
+                  display:flex;align-items:center;justify-content:center;box-shadow:0 8px 30px rgba(138,43,226,0.12);">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 12h18" stroke="#021018" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 3v18" stroke="#021018" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div>
+        <div style="font-size:18px;font-weight:700;color:#e6fff7">{t['title']}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.30)">{t['lead'][:110]}...</div>
+      </div>
+    </div>
+    """
+    st.markdown(header_html, unsafe_allow_html=True)
+
+inject_futuristic_css()
+inject_header_bar()
+
+st.title("")  # visual balance (header already shows main title)
+st.markdown(f"<div class='neon-box'>{t['lead']}</div>", unsafe_allow_html=True)
 
 st.header(t["matrix_header"])
 st.subheader(t["affine_title"])
@@ -71,22 +163,22 @@ st.markdown(t["conv_bullets"])
 
 # Visual demo generator using PIL (no cv2)
 def generate_grid_image_pil(size=512, grid_steps=8):
-    img = Image.new("RGB", (size, size), (255, 255, 255))
+    img = Image.new("RGB", (size, size), (10, 18, 30))
     draw = ImageDraw.Draw(img)
     step = max(4, size // grid_steps)
     for i in range(0, size, step):
-        draw.line([(i, 0), (i, size)], fill=(220, 220, 220), width=1)
-        draw.line([(0, i), (size, i)], fill=(220, 220, 220), width=1)
-    draw.line([(size//4, size//4), (3*size//4, size//4)], fill=(0, 0, 200), width=6)
+        draw.line([(i, 0), (i, size)], fill=(30, 40, 60), width=1)
+        draw.line([(0, i), (size, i)], fill=(30, 40, 60), width=1)
+    draw.line([(size//4, size//4), (3*size//4, size//4)], fill=(0, 255, 225), width=6)
     arrow_head = [(3*size//4, size//4), (3*size//4 - 20, size//4 - 15), (3*size//4 - 20, size//4 + 15)]
-    draw.polygon(arrow_head, fill=(0, 0, 200))
+    draw.polygon(arrow_head, fill=(138, 43, 226))
     r = 6
     cx, cy = size//2, size//2
     draw.ellipse([(cx-r, cy-r), (cx+r, cy+r)], fill=(0, 150, 0))
     return img
 
 def pil_rotate(img, angle):
-    return img.rotate(angle, resample=Image.BICUBIC, expand=False, fillcolor=(255,255,255))
+    return img.rotate(angle, resample=Image.BICUBIC, expand=False, fillcolor=(10,18,30))
 
 def pil_sobel_like_edges(img):
     gray = img.convert("L")
