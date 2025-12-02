@@ -59,6 +59,7 @@ TEXT = {
 }
 
 t = TEXT[lang]
+
 st.set_page_config(page_title=t["page_title"], layout="wide", initial_sidebar_state="expanded")
 
 # --- Futuristic CSS (same visual theme as home) ---
@@ -90,7 +91,8 @@ def inject_futuristic_css():
 
 inject_futuristic_css()
 
-st.title(f"<span style='color:#00ffe1'>{t['title']}</span>", unsafe_allow_html=True)
+# Replace st.title(...) with st.markdown containing an <h1> so we can use unsafe HTML
+st.markdown(f"<h1 style='color:#00ffe1'>{t['title']}</h1>", unsafe_allow_html=True)
 st.markdown(f"<div class='neon-box'>{t['lead']}</div>", unsafe_allow_html=True)
 
 # --- helpers (cv2-free) ---
@@ -221,10 +223,10 @@ if tool == t["affine"]:
     col_o, col_t = st.columns(2)
     with col_o:
         st.subheader(t["original"])
-        st.image(pil_from_array(img_arr), use_column_width=True)
+        st.image(Image.fromarray(img_arr), use_column_width=True)
     with col_t:
         st.subheader(t["transformed"])
-        st.image(pil_from_array(transformed), use_column_width=True)
+        st.image(Image.fromarray(transformed), use_column_width=True)
 
 elif tool == t["flip"]:
     st.sidebar.subheader(t["flip"])
@@ -233,10 +235,10 @@ elif tool == t["flip"]:
     col_o, col_t = st.columns(2)
     with col_o:
         st.subheader(t["original"])
-        st.image(pil_from_array(img_arr), use_column_width=True)
+        st.image(Image.fromarray(img_arr), use_column_width=True)
     with col_t:
         st.subheader(f"{t['transformed']}: {flip_mode}")
-        st.image(pil_from_array(transformed), use_column_width=True)
+        st.image(Image.fromarray(transformed), use_column_width=True)
 
 else:
     st.sidebar.subheader(t["filter_selection"])
@@ -261,10 +263,10 @@ else:
     col_o, col_t = st.columns(2)
     with col_o:
         st.subheader(t["original"])
-        st.image(pil_from_array(img_arr), use_column_width=True)
+        st.image(Image.fromarray(img_arr), use_column_width=True)
     with col_t:
         st.subheader(f"{t['transformed']}: {sel}")
-        st.image(pil_from_array(transformed), use_column_width=True)
+        st.image(Image.fromarray(transformed), use_column_width=True)
 
 st.markdown("---")
 st.caption(t["tip"])
