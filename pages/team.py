@@ -2,14 +2,38 @@ import streamlit as st
 from PIL import Image, ImageDraw, ImageFont
 from pathlib import Path
 
-st.set_page_config(page_title="Team Members", layout="wide")
+# --- Language selection ---
+LANG_OPTIONS = {"English": "en", "Bahasa Indonesia": "id"}
+default_lang = "Bahasa Indonesia"
+lang_choice = st.sidebar.selectbox("Language / Bahasa", list(LANG_OPTIONS.keys()), index=0)
+lang = LANG_OPTIONS[lang_choice]
 
-st.title("Team Members")
-st.markdown(
-    "Halaman ini memuat biodata tim dan foto anggota.\n"
-    "Aplikasi mencari foto di folder 'images' (relative path dari root proyek). "
-    "Jika foto tidak ditemukan, avatar inisial akan ditampilkan."
-)
+# --- Translations ---
+TEXT = {
+    "en": {
+        "page_title": "Team Members",
+        "title": "Team Members",
+        "lead": "This page shows team biodata and photos. The app searches for photos in the 'images' folder. If a photo is not found, a initials avatar will be shown.",
+        "sid": "SID",
+        "origin": "Origin",
+        "distribution": "Task distribution",
+        "contrib_short": "Contributed to survey, cleaning, analysis, visualization, and building the Streamlit dashboard."
+    },
+    "id": {
+        "page_title": "Anggota Tim",
+        "title": "Anggota Tim",
+        "lead": "Halaman ini menampilkan biodata tim dan foto. Aplikasi mencari foto di folder 'images'. Jika foto tidak ditemukan, avatar inisial akan ditampilkan.",
+        "sid": "SID",
+        "origin": "Asal daerah",
+        "distribution": "Distribusi tugas",
+        "contrib_short": "Berkontribusi dalam survei, pembersihan data, analisis, visualisasi, dan pembuatan dashboard Streamlit."
+    }
+}
+
+t = TEXT[lang]
+st.set_page_config(page_title=t["page_title"], layout="wide")
+st.title(t["title"])
+st.markdown(t["lead"])
 
 # --- Team biodata ---
 team = [
@@ -47,10 +71,8 @@ team = [
     },
 ]
 
-# Fixed photo directory
 PHOTO_DIRS = ["images"]
 
-# Helper: generate initials avatar if photo missing
 def generate_avatar(name, size=270, bgcolor=(70,130,180)):
     initials = "".join([part[0].upper() for part in name.split()[:2]])
     img = Image.new("RGB", (size, size), bgcolor)
@@ -63,7 +85,6 @@ def generate_avatar(name, size=270, bgcolor=(70,130,180)):
     draw.text(((size - w) / 2, (size - h) / 2), initials, fill="white", font=font)
     return img
 
-# Helper: try to find a photo file for a member in configured dirs
 def find_photo_path(member, dirs):
     candidates = []
     if member.get("photo_file"):
@@ -86,7 +107,6 @@ def find_photo_path(member, dirs):
                 return str(f)
     return None
 
-# Display team members (no uploader / no extra folder text)
 for member in team:
     cols = st.columns([1, 3])
     with cols[0]:
@@ -96,14 +116,14 @@ for member in team:
                 img = Image.open(photo_path).convert("RGB")
                 st.image(img, width=270)
             except Exception:
-                st.warning(f"File {photo_path} ditemukan tapi gagal dibuka. Menampilkan avatar.")
+                st.warning(f"File {photo_path} found but cannot be opened. Showing avatar.")
                 st.image(generate_avatar(member["full_name"]), width=270)
         else:
             st.image(generate_avatar(member["full_name"]), width=270)
     with cols[1]:
         st.markdown(f"### {member['full_name']}")
-        st.markdown(f"- **SID:** {member['sid']}")
-        st.markdown(f"- **Asal daerah:** {member['origin']}")
-        st.markdown(f"- **Distribusi tugas:** {member['distribution']}")
-        st.markdown("Singkat: Berkontribusi dalam proyek survei, pembersihan data, analisis, visualisasi, dan pembuatan dashboard Streamlit.")
+        st.markdown(f"- **{t['sid']}:** {member['sid']}")
+        st.markdown(f"- **{t['origin']}:** {member['origin']}")
+        st.markdown(f"- **{t['distribution']}:** {member['distribution']}")
+        st.markdown(t["contrib_short"])
     st.markdown("---")
