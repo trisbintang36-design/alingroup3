@@ -1,6 +1,5 @@
 import streamlit as st
 from PIL import Image, ImageDraw, ImageFont
-import os
 from pathlib import Path
 
 st.set_page_config(page_title="Team Members", layout="wide")
@@ -48,18 +47,11 @@ team = [
     },
 ]
 
-# Fixed photo directory (no uploader / no folder input)
+# Fixed photo directory
 PHOTO_DIRS = ["images"]
 
-st.markdown("---")
-st.markdown(
-    f"- Mencari foto di (urutan): {', '.join(PHOTO_DIRS)}\n"
-    "- Didukung ekstensi: .jpg, .jpeg, .png\n"
-    "- Uploader foto dan pengaturan folder telah dihapus dari halaman sesuai permintaan."
-)
-
 # Helper: generate initials avatar if photo missing
-def generate_avatar(name, size=320, bgcolor=(70,130,180)):
+def generate_avatar(name, size=270, bgcolor=(70,130,180)):
     initials = "".join([part[0].upper() for part in name.split()[:2]])
     img = Image.new("RGB", (size, size), bgcolor)
     draw = ImageDraw.Draw(img)
@@ -74,10 +66,8 @@ def generate_avatar(name, size=320, bgcolor=(70,130,180)):
 # Helper: try to find a photo file for a member in configured dirs
 def find_photo_path(member, dirs):
     candidates = []
-    # explicit filename first
     if member.get("photo_file"):
         candidates.append(member["photo_file"])
-    # fallback patterns: short name, parts of full name
     name_parts = [member["short"]] + member["full_name"].lower().split()
     for part in name_parts:
         candidates.append(f"{part}.jpg")
@@ -91,13 +81,12 @@ def find_photo_path(member, dirs):
             fpath = p / cand
             if fpath.exists():
                 return str(fpath)
-        # pattern search: any file in dir that contains short name
         for f in p.iterdir():
             if f.is_file() and member["short"].lower() in f.name.lower() and f.suffix.lower() in [".jpg", ".jpeg", ".png"]:
                 return str(f)
     return None
 
-# Display team members (no uploaders)
+# Display team members (no uploader / no extra folder text)
 for member in team:
     cols = st.columns([1, 3])
     with cols[0]:
@@ -105,12 +94,12 @@ for member in team:
         if photo_path:
             try:
                 img = Image.open(photo_path).convert("RGB")
-                st.image(img, width=220)
+                st.image(img, width=270)
             except Exception:
                 st.warning(f"File {photo_path} ditemukan tapi gagal dibuka. Menampilkan avatar.")
-                st.image(generate_avatar(member["full_name"]), width=220)
+                st.image(generate_avatar(member["full_name"]), width=270)
         else:
-            st.image(generate_avatar(member["full_name"]), width=220)
+            st.image(generate_avatar(member["full_name"]), width=270)
     with cols[1]:
         st.markdown(f"### {member['full_name']}")
         st.markdown(f"- **SID:** {member['sid']}")
@@ -120,7 +109,6 @@ for member in team:
     st.markdown("---")
 
 st.markdown(
-    "Catatan:\n"
     "- Letakkan foto dengan nama tris.jpg, fia.jpg, gina.jpg, fasya.jpg di folder 'images/' (relative path dari root proyek).\n"
     "- Jika Anda ingin fitur upload atau pengaturan folder nanti, saya bisa tambahkan kembali atas permintaan."
 )
