@@ -1,9 +1,7 @@
 import streamlit as st
 
 st.title("Tim Pembuat Aplikasi")
-
-# Membuat layout grid dengan 2 kolom
-cols = st.columns(2)
+st.write("Berikut anggota tim beserta biodata dan distribusi tugas:")
 
 # Data anggota tim
 team_members = [
@@ -37,12 +35,14 @@ team_members = [
     },
 ]
 
-# Loop untuk menampilkan anggota tim
-for i, member in enumerate(team_members):
-    col = cols[i % 2]  # 2 kolom
-    with col:
-        st.image(member["image"], width=270)
-        st.subheader(member["name"])
-        st.write(f"**SID:** {member['sid']}")
-        st.write(f"**Asal daerah:** {member['origin']}")
-        st.write(f"**Distribusi tugas:** {member['tasks']}")
+# Tampilkan anggota tim
+for member in team_members:
+    st.image(member["image"], width=270)
+    st.subheader(member["name"])
+    st.write(f"**SID:** {member['sid']}")
+    st.write(f"**Asal daerah:** {member['origin']}")
+    st.write(f"**Distribusi tugas:** {member['tasks']}")
+    
+    # Spasi atau garis pemisah antar profil
+    st.markdown("---")  # garis horizontal
+    st.write("\n")      # jarak vertikal tambahan
