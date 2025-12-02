@@ -107,6 +107,3 @@ for member in team:
         st.markdown(f"- **Distribusi tugas:** {member['distribution']}")
         st.markdown("Singkat: Berkontribusi dalam proyek survei, pembersihan data, analisis, visualisasi, dan pembuatan dashboard Streamlit.")
     st.markdown("---")
-
-)
-
