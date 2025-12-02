@@ -1,14 +1,12 @@
 import streamlit as st
-from PIL import Image
-import numpy as np
-import io
-from scipy import ndimage
 from pathlib import Path
+from PIL import Image
 
-st.set_page_config(page_title="Image Processing Tools", layout="wide")
-BASE_DIR = Path(__file__).parents[0]
+st.set_page_config(page_title="Team Members", layout="centered")
+BASE = Path(__file__).parents[0]
+ASSETS = BASE / "assets"
 
-# language selection synchronized with main app via the sidebar value if present
+# language selector
 LANGS = {
     "id": "Bahasa Indonesia",
     "en": "English",
@@ -18,128 +16,82 @@ LANGS = {
 st.sidebar.markdown("## 🌐 Language / Bahasa / 语言 / 언어")
 lang = st.sidebar.selectbox("Select language", options=list(LANGS.keys()), index=1, format_func=lambda k: LANGS[k])
 
-T = {
-    "title": {"en":"Image Processing Tools","id":"Alat Pengolahan Gambar","zh":"图像处理工具","ko":"이미지 처리 도구"},
-    "upload": {"en":"Upload an image (png/jpg/bmp)","id":"Unggah gambar (png/jpg/bmp)","zh":"上传图像 (png/jpg/bmp)","ko":"이미지 업로드 (png/jpg/bmp)"},
-    "mode": {"en":"Mode","id":"Mode","zh":"模式","ko":"모드"},
-    "transformations": {"en":"Transformations","id":"Transformasi","zh":"变换","ko":"변환"},
-    "filters": {"en":"Filters","id":"Filter","zh":"滤波器","ko":"필터"},
-    "download": {"en":"Download PNG","id":"Unduh PNG","zh":"下载 PNG","ko":"PNG 다운로드"},
-    "example_info": {"en":"Upload an image to begin. Example will be used if none uploaded.","id":"Unggah gambar untuk memulai. Contoh akan digunakan jika tidak ada yang diunggah.","zh":"上传图像以开始。如果没有上传将使用示例。","ko":"시작하려면 이미지를 업로드하세요. 업로드하지 않으면 예제가 사용됩니다."},
+TEXT = {
+    "title": {"en":"Team Members","id":"Anggota Tim","zh":"团队成员","ko":"팀원"},
+    "how_it_works": {
+        "en":"How the app works (short)",
+        "id":"Cara kerja aplikasi (singkat)",
+        "zh":"应用如何工作（简短）",
+        "ko":"앱 작동 방식 (간단히)"
+    },
+    "note_photos": {
+        "en":"Photos are loaded from assets/; replace files if you want to use different images.",
+        "id":"Foto dimuat dari folder assets/; ganti file jika ingin menggunakan gambar lain.",
+        "zh":"照片从 assets/ 加载；如需使用其他图像请替换文件。",
+        "ko":"사진은 assets/에서 로드됩니다; 다른 이미지를 사용하려면 파일을 교체하세요."
+    }
 }
 
-get = lambda k: T[k][lang]
+def t(k): return TEXT[k][lang]
 
-st.title(get("title"))
+st.title(t("title"))
+st.markdown(t("note_photos"))
 
-uploaded = st.file_uploader(get("upload"), type=["png","jpg","jpeg","bmp"], accept_multiple_files=False)
-if not uploaded:
-    st.info(get("example_info"))
-    # fallback example image (from web)
-    try:
-        from urllib.request import urlopen
-        example_url = "https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?w=800&q=80"
-        with urlopen(example_url) as resp:
-            uploaded = io.BytesIO(resp.read())
-    except Exception:
-        uploaded = None
+# Team data as requested
+members = [
+    {
+        "name": "Moh. Trisbintang A. ⚙️",
+        "photo": ASSETS / "tris.jpeg",
+        "role": "Menu ⚙️\nDistribusi: Survei, bersihkan data, dashboard Streamlit (menu & navigasi)",
+        "sid": "004202400102",
+        "origin": "Gorontalo",
+    },
+    {
+        "name": "Dwi Anfia Putri Wulandari ⚙️",
+        "photo": ASSETS / "fia.jpeg",
+        "role": "🛠️ Distribusi: Analisis dasar (histogram, boxplot), coding grafik Python, Streamlit bagian grafik",
+        "sid": "004202400034",
+        "origin": "Bogor",
+    },
+    {
+        "name": "Gina Sonia ⚙️",
+        "photo": ASSETS / "gina.jpeg",
+        "role": "🔧 Distribusi: Fokus laporan & bantu olah data",
+        "sid": "004202400076",
+        "origin": "Cikampek",
+    },
+    {
+        "name": "Ananda Fasya Wiratama Putri ⚙️",
+        "photo": ASSETS / "fasya.jpeg",
+        "role": "⚡ Distribusi: Analisis hubungan variabel, penjelasan pengaruh medsos ke mental, Streamlit bagian analisis",
+        "sid": "004202400107",
+        "origin": "Depok",
+    },
+]
 
-if uploaded:
-    img = Image.open(uploaded).convert("RGB")
-    st.sidebar.header(get("mode"))
-    mode = st.sidebar.radio("", [get("transformations"), get("filters")])
-
-    col_orig, col_proc = st.columns([1,1])
-    col_orig.image(img, caption="Original", use_column_width=True)
-
-    def apply_affine_pil(img, matrix):
-        mat = np.array(matrix, dtype=float)
-        inv = np.linalg.inv(mat)
-        a, b, c = inv[0, 0], inv[0, 1], inv[0, 2]
-        d, e, f = inv[1, 0], inv[1, 1], inv[1, 2]
-        return img.transform(img.size, Image.AFFINE, (a, b, c, d, e, f), resample=Image.BICUBIC)
-
-    if mode == get("transformations"):
-        st.sidebar.subheader("Affine parameters")
-        tx = st.sidebar.slider("Translate X (px)", -300, 300, 0)
-        ty = st.sidebar.slider("Translate Y (px)", -300, 300, 0)
-        angle = st.sidebar.slider("Rotation (deg)", -180, 180, 0)
-        sx = st.sidebar.slider("Scale X", 0.1, 3.0, 1.0, 0.05)
-        sy = st.sidebar.slider("Scale Y", 0.1, 3.0, 1.0, 0.05)
-        shx = st.sidebar.slider("Shear X", -1.0, 1.0, 0.0, 0.01)
-        shy = st.sidebar.slider("Shear Y", -1.0, 1.0, 0.0, 0.01)
-        center = st.sidebar.checkbox("Rotate about image center", value=True)
-
-        def T(tx, ty): return np.array([[1,0,tx],[0,1,ty],[0,0,1]])
-        def R(deg):
-            r = np.deg2rad(deg); c,s = np.cos(r), np.sin(r)
-            return np.array([[c,-s,0],[s,c,0],[0,0,1]])
-        def S(sx, sy): return np.array([[sx,0,0],[0,sy,0],[0,0,1]])
-        def H(shx, shy): return np.array([[1,shx,0],[shy,1,0],[0,0,1]])
-
-        w,h = img.size
-        if center:
-            to_center = T(-w/2, -h/2)
-            back = T(w/2, h/2)
-            M = back @ T(tx,ty) @ R(angle) @ H(shx, shy) @ S(sx,sy) @ to_center
+for m in members:
+    cols = st.columns([1,3])
+    img_path = m["photo"]
+    with cols[0]:
+        if img_path.exists():
+            st.image(Image.open(img_path), width=130)
         else:
-            M = T(tx,ty) @ R(angle) @ H(shx, shy) @ S(sx,sy)
+            st.warning(f"Foto tidak ditemukan: {img_path.name}")
+            st.image("https://via.placeholder.com/130x130.png?text=No+Photo", width=130)
+    with cols[1]:
+        st.subheader(m["name"])
+        st.markdown(f"**SID:** {m['sid']}  \n**Asal daerah:** {m['origin']}")
+        st.write(m["role"])
+        st.markdown("---")
 
-        processed = apply_affine_pil(img, M)
-        col_proc.image(processed, caption="Transformed", use_column_width=True)
+st.header(t("how_it_works"))
+st.write(
+    """
+- Halaman Home: menjelaskan matematika di balik matriks affine dan kernel konvolusi, plus contoh visual.
+- Halaman Image Processing Tools: unggah gambar, pilih parameter transformasi (translate/rotate/scale/shear) atau pilih/edit kernel konvolusi dan lihat preview.
+- Affine transforms dirangkai menjadi matriks 3x3 dan diterapkan menggunakan inverse mapping (PIL expects inverse).
+- Konvolusi diterapkan per-channel menggunakan scipy.ndimage.convolve, ada opsi normalisasi kernel.
+"""
+)
 
-    else:
-        st.sidebar.subheader("Filter / Kernel")
-        filter_choice = st.sidebar.selectbox("Choose filter", ["Identity","Box blur (3x3)","Gaussian-ish blur (5x5)","Sharpen","Sobel X","Sobel Y","Custom 3x3"])
-        if filter_choice == "Identity":
-            kernel = np.array([[0,0,0],[0,1,0],[0,0,0]])
-        elif filter_choice == "Box blur (3x3)":
-            kernel = np.ones((3,3))/9.0
-        elif filter_choice == "Gaussian-ish blur (5x5)":
-            g1 = np.array([1,4,6,4,1])
-            k5 = np.outer(g1,g1)
-            kernel = k5 / k5.sum()
-        elif filter_choice == "Sharpen":
-            kernel = np.array([[0,-1,0],[-1,5,-1],[0,-1,0]])
-        elif filter_choice == "Sobel X":
-            kernel = np.array([[-1,0,1],[-2,0,2],[-1,0,1]])
-        elif filter_choice == "Sobel Y":
-            kernel = np.array([[-1,-2,-1],[0,0,0],[1,2,1]])
-        else:
-            st.sidebar.markdown("Edit 3x3 kernel values")
-            vals = []
-            for r in range(3):
-                cols = st.sidebar.columns(3)
-                row = []
-                for c in range(3):
-                    key = f"k_{r}_{c}"
-                    row.append(cols[c].number_input(f"{r},{c}", value=0.0, format="%.3f", key=key))
-                vals.append(row)
-            kernel = np.array(vals, dtype=float)
-
-        normalize = st.sidebar.checkbox("Normalize kernel (sum to 1)", value=("Box blur" in filter_choice or "Gaussian" in filter_choice))
-        if normalize:
-            s = kernel.sum()
-            if s != 0:
-                kernel = kernel / s
-
-        st.sidebar.write("Kernel:")
-        st.sidebar.write(kernel)
-
-        arr = np.asarray(img).astype(np.float32)
-        if arr.ndim == 3:
-            out = np.zeros_like(arr)
-            for ch in range(arr.shape[2]):
-                out[:,:,ch] = ndimage.convolve(arr[:,:,ch], kernel, mode='reflect')
-            out = np.clip(out, 0, 255).astype(np.uint8)
-        else:
-            out = ndimage.convolve(arr, kernel, mode='reflect')
-            out = np.clip(out, 0, 255).astype(np.uint8)
-
-        processed = Image.fromarray(out)
-        col_proc.image(processed, caption=f"Filtered: {filter_choice}", use_column_width=True)
-
-    st.markdown("---")
-    buf = io.BytesIO()
-    processed.save(buf, format="PNG")
-    st.download_button(get("download"), data=buf.getvalue(), file_name="processed.png", mime="image/png")
+st.info(TEXT["note_photos"]["en"] + " / " + TEXT["note_photos"]["id"])
