@@ -3,13 +3,7 @@ from PIL import Image, ImageDraw, ImageFont
 import os
 from pathlib import Path
 
-st.set_page_config(page_title="Team Members", layout="wide")
 
-st.title("Team Members")
-st.markdown(
-    "Halaman ini memuat biodata tim dan foto anggota.\n"
-    "Secara default aplikasi mencari foto di folder 'images' (jika Anda meletakkan foto di folder lain, sebutkan path di bawah)."
-)
 
 # --- Team biodata ---
 team = [
@@ -152,3 +146,4 @@ st.markdown(
     "- Anda dapat mengisi field 'Folder foto' di atas untuk menunjuk folder berbeda (relative path dari root proyek).\n"
     "- Upload foto lewat uploader akan menimpa tampilan file yang ada di folder."
 )
+
