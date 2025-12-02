@@ -2,6 +2,9 @@ import streamlit as st
 from PIL import Image, ImageDraw, ImageFont
 from pathlib import Path
 
+# Set page config early (before any Streamlit UI calls)
+st.set_page_config(page_title="Team Members", layout="wide", initial_sidebar_state="expanded")
+
 # --- Language selection ---
 LANG_OPTIONS = {"English": "en", "Bahasa Indonesia": "id"}
 lang_choice = st.sidebar.selectbox("Language / Bahasa", list(LANG_OPTIONS.keys()), index=0)
@@ -30,7 +33,6 @@ TEXT = {
 }
 
 t = TEXT[lang]
-st.set_page_config(page_title=t["page_title"], layout="wide", initial_sidebar_state="expanded")
 
 # Futuristic CSS shared with other pages
 def inject_futuristic_css():
@@ -54,7 +56,8 @@ def inject_futuristic_css():
 
 inject_futuristic_css()
 
-st.title(f"<span style='color:#00ffe1'>{t['title']}</span>", unsafe_allow_html=True)
+# Use st.markdown with HTML for styled title (st.title does not accept unsafe HTML)
+st.markdown(f"<h1 style='color:#00ffe1'>{t['title']}</h1>", unsafe_allow_html=True)
 st.markdown(f"<div class='neon-box'>{t['lead']}</div>", unsafe_allow_html=True)
 
 # --- Team biodata ---
@@ -129,6 +132,7 @@ def find_photo_path(member, dirs):
                 return str(f)
     return None
 
+# Display members
 for member in team:
     cols = st.columns([1, 3])
     with cols[0]:
