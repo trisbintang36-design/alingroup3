@@ -3,7 +3,14 @@ from PIL import Image, ImageDraw, ImageFont
 import os
 from pathlib import Path
 
+st.set_page_config(page_title="Team Members", layout="wide")
 
+st.title("Team Members")
+st.markdown(
+    "Halaman ini memuat biodata tim dan foto anggota.\n"
+    "Aplikasi mencari foto di folder 'images' (relative path dari root proyek). "
+    "Jika foto tidak ditemukan, avatar inisial akan ditampilkan."
+)
 
 # --- Team biodata ---
 team = [
@@ -41,23 +48,14 @@ team = [
     },
 ]
 
-# By default prefer 'images' folder, fallback to 'team_photos'
-default_dirs = ["images", "team_photos"]
+# Fixed photo directory (no uploader / no folder input)
+PHOTO_DIRS = ["images"]
 
-st.subheader("Pengaturan folder foto")
-photo_dir_input = st.text_input(
-    "Folder foto (relative path). Kosong = mencari otomatis di 'images' lalu 'team_photos'.",
-    value=""
-)
-if photo_dir_input.strip() != "":
-    PHOTO_DIRS = [photo_dir_input.strip()]
-else:
-    PHOTO_DIRS = default_dirs
-
+st.markdown("---")
 st.markdown(
     f"- Mencari foto di (urutan): {', '.join(PHOTO_DIRS)}\n"
     "- Didukung ekstensi: .jpg, .jpeg, .png\n"
-    "- Anda juga bisa mengunggah foto individu lewat uploader di bawah (akan menimpa file dari folder)."
+    "- Uploader foto dan pengaturan folder telah dihapus dari halaman sesuai permintaan."
 )
 
 # Helper: generate initials avatar if photo missing
@@ -85,7 +83,6 @@ def find_photo_path(member, dirs):
         candidates.append(f"{part}.jpg")
         candidates.append(f"{part}.jpeg")
         candidates.append(f"{part}.png")
-    # also look for any file containing short name
     for d in dirs:
         p = Path(d)
         if not p.exists() or not p.is_dir():
@@ -100,38 +97,20 @@ def find_photo_path(member, dirs):
                 return str(f)
     return None
 
-st.markdown("---")
-st.subheader("Upload foto per anggota (opsional)")
-uploaded_photos = {}
-for i, member in enumerate(team):
-    key = f"upload_{member['short']}"
-    uploaded = st.file_uploader(f"Upload foto untuk {member['full_name']} (opsional)", type=["jpg","jpeg","png"], key=key)
-    if uploaded:
-        try:
-            img = Image.open(uploaded).convert("RGB")
-            uploaded_photos[member["short"]] = img
-        except Exception:
-            st.warning(f"Gagal membuka file upload untuk {member['full_name']}. Lewati file ini.")
-
-st.markdown("---")
-st.header("Anggota Tim")
+# Display team members (no uploaders)
 for member in team:
     cols = st.columns([1, 3])
     with cols[0]:
-        # priority: uploaded override -> search in PHOTO_DIRS -> avatar
-        if member["short"] in uploaded_photos:
-            st.image(uploaded_photos[member["short"]], width=220)
-        else:
-            photo_path = find_photo_path(member, PHOTO_DIRS)
-            if photo_path:
-                try:
-                    img = Image.open(photo_path).convert("RGB")
-                    st.image(img, width=220)
-                except Exception:
-                    st.warning(f"File {photo_path} ditemukan tapi gagal dibuka. Menampilkan avatar.")
-                    st.image(generate_avatar(member["full_name"]), width=220)
-            else:
+        photo_path = find_photo_path(member, PHOTO_DIRS)
+        if photo_path:
+            try:
+                img = Image.open(photo_path).convert("RGB")
+                st.image(img, width=220)
+            except Exception:
+                st.warning(f"File {photo_path} ditemukan tapi gagal dibuka. Menampilkan avatar.")
                 st.image(generate_avatar(member["full_name"]), width=220)
+        else:
+            st.image(generate_avatar(member["full_name"]), width=220)
     with cols[1]:
         st.markdown(f"### {member['full_name']}")
         st.markdown(f"- **SID:** {member['sid']}")
@@ -142,8 +121,6 @@ for member in team:
 
 st.markdown(
     "Catatan:\n"
-    "- Jika Anda menaruh foto di folder `images/`, pastikan nama file sesuai (mis. tris.jpg, fia.jpg, gina.jpg, fasya.jpg) atau mengandung short name (tris, fia, gina, fasya).\n"
-    "- Anda dapat mengisi field 'Folder foto' di atas untuk menunjuk folder berbeda (relative path dari root proyek).\n"
-    "- Upload foto lewat uploader akan menimpa tampilan file yang ada di folder."
+    "- Letakkan foto dengan nama tris.jpg, fia.jpg, gina.jpg, fasya.jpg di folder 'images/' (relative path dari root proyek).\n"
+    "- Jika Anda ingin fitur upload atau pengaturan folder nanti, saya bisa tambahkan kembali atas permintaan."
 )
-
