@@ -4,7 +4,6 @@ from pathlib import Path
 
 # --- Language selection ---
 LANG_OPTIONS = {"English": "en", "Bahasa Indonesia": "id"}
-default_lang = "Bahasa Indonesia"
 lang_choice = st.sidebar.selectbox("Language / Bahasa", list(LANG_OPTIONS.keys()), index=0)
 lang = LANG_OPTIONS[lang_choice]
 
@@ -31,9 +30,32 @@ TEXT = {
 }
 
 t = TEXT[lang]
-st.set_page_config(page_title=t["page_title"], layout="wide")
-st.title(t["title"])
-st.markdown(t["lead"])
+st.set_page_config(page_title=t["page_title"], layout="wide", initial_sidebar_state="expanded")
+
+# Futuristic CSS shared with other pages
+def inject_futuristic_css():
+    css = """
+    <style>
+    [data-testid="stAppViewContainer"] > .main {
+      background: linear-gradient(135deg, #030612 0%, #00121a 60%);
+      color: #cfeef4;
+      min-height: 100vh;
+    }
+    [data-testid="stSidebar"] {
+      background: linear-gradient(180deg, rgba(7,18,38,0.95), rgba(2,10,20,0.95));
+      color: #cfeef4;
+    }
+    h1,h2,h3 { color:#00ffe1; text-shadow: 0 0 8px rgba(0,255,225,0.08); }
+    .neon-box { background: rgba(255,255,255,0.02); padding:10px; border-radius:10px; border:1px solid rgba(0,255,225,0.04); }
+    .stImage>div>img { box-shadow: 0 10px 40px rgba(0,0,0,0.6); border-radius:6px; }
+    </style>
+    """
+    st.markdown(css, unsafe_allow_html=True)
+
+inject_futuristic_css()
+
+st.title(f"<span style='color:#00ffe1'>{t['title']}</span>", unsafe_allow_html=True)
+st.markdown(f"<div class='neon-box'>{t['lead']}</div>", unsafe_allow_html=True)
 
 # --- Team biodata ---
 team = [
