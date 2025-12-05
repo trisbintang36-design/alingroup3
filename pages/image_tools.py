@@ -62,34 +62,6 @@ t = TEXT[lang]
 
 st.set_page_config(page_title=t["page_title"], layout="wide", initial_sidebar_state="expanded")
 
-# --- Futuristic CSS (same visual theme as home) ---
-def inject_futuristic_css():
-    css = """
-    <style>
-    :root{
-      --bg-1: #040812;
-      --bg-2: #071226;
-      --accent: #00ffe1;
-      --accent-2: #8a2be2;
-    }
-    [data-testid="stAppViewContainer"] > .main {
-      background: linear-gradient(135deg, #030612 0%, #00121a 60%);
-      color: #cfeef4;
-      min-height: 100vh;
-    }
-    [data-testid="stSidebar"] {
-      background: linear-gradient(180deg, rgba(7,18,38,0.95), rgba(2,10,20,0.95));
-      color: #cfeef4;
-    }
-    h1,h2,h3 { color: var(--accent); text-shadow: 0 0 8px rgba(0,255,225,0.08); }
-    .neon-box { background: rgba(255,255,255,0.02); padding:10px; border-radius:10px; border:1px solid rgba(0,255,225,0.04); }
-    .stButton>button { background: linear-gradient(90deg,#00ffe1,#8a2be2); color:#021018; border-radius:10px; }
-    .stImage>div>img { box-shadow: 0 10px 40px rgba(0,0,0,0.6); border-radius:6px; }
-    </style>
-    """
-    st.markdown(css, unsafe_allow_html=True)
-
-inject_futuristic_css()
 
 # Replace st.title(...) with st.markdown containing an <h1> so we can use unsafe HTML
 st.markdown(f"<h1 style='color:#00ffe1'>{t['title']}</h1>", unsafe_allow_html=True)
@@ -270,3 +242,4 @@ else:
 
 st.markdown("---")
 st.caption(t["tip"])
+
