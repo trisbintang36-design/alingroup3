@@ -13,11 +13,87 @@ LANG_OPTIONS = {"English": "en", "Bahasa Indonesia": "id"}
 if "lang" not in st.session_state:
     st.session_state.lang = "id"  # default bahasa indonesia
 
-# Sidebar: language + page navigation
+# --- Theme selection stored in session_state (new) ---
+if "theme" not in st.session_state:
+    st.session_state.theme = "dark"  # default to dark for better contrast on bright screens
+
+# --- Futuristic theme CSS (single injection) ---
+def inject_futuristic_css(theme="dark"):
+    # Theme-aware CSS. Call this after the sidebar theme selector so it updates on change.
+    if theme == "dark":
+        css = """
+        <style>
+        :root{
+          --bg-1: #040812;
+          --bg-2: #071226;
+          --accent: #00ffe1;
+          --accent-2: #8a2be2;
+        }
+        [data-testid="stAppViewContainer"] > .main {
+          background: linear-gradient(135deg, #030612 0%, #00121a 60%);
+          color: #cfeef4;
+          min-height: 100vh;
+        }
+        [data-testid="stSidebar"] {
+          background: linear-gradient(180deg, rgba(7,18,38,0.95), rgba(2,10,20,0.95));
+          color: #cfeef4;
+        }
+        header[data-testid="stHeader"] {visibility:hidden;}
+        footer {visibility:hidden;}
+        h1,h2,h3 { color:#00ffe1; text-shadow: 0 0 8px rgba(0,255,225,0.08); }
+        .neon-box { background: rgba(255,255,255,0.02); padding:12px; border-radius:12px; border:1px solid rgba(0,255,225,0.04); }
+        .accent-pill { display:inline-block; padding:6px 12px; border-radius:20px; background: linear-gradient(90deg, rgba(0,255,225,0.12), rgba(138,43,226,0.08)); color: var(--accent); font-weight:600; }
+        .stButton>button { background: linear-gradient(90deg,#00ffe1,#8a2be2); color:#021018; border-radius:10px; padding:8px 14px; }
+        .stImage>div>img { box-shadow: 0 10px 40px rgba(0,0,0,0.6); border-radius:6px; border:1px solid rgba(255,255,255,0.03); }
+        .muted { color: #9aa8b2; }
+        </style>
+        """
+    else:
+        # Light theme CSS
+        css = """
+        <style>
+        :root{
+          --bg-1: #ffffff;
+          --bg-2: #f6f8fa;
+          --accent: #0057b7;
+          --accent-2: #8a2be2;
+        }
+        [data-testid="stAppViewContainer"] > .main {
+          background: linear-gradient(135deg, #ffffff 0%, #f6faff 60%);
+          color: #0b2540;
+          min-height: 100vh;
+        }
+        [data-testid="stSidebar"] {
+          background: linear-gradient(180deg, #ffffff, #f4f8ff);
+          color: #0b2540;
+        }
+        header[data-testid="stHeader"] {visibility:hidden;}
+        footer {visibility:hidden;}
+        h1,h2,h3 { color:#0057b7; text-shadow: none; }
+        .neon-box { background: rgba(0,87,183,0.03); padding:12px; border-radius:12px; border:1px solid rgba(0,87,183,0.06); }
+        .accent-pill { display:inline-block; padding:6px 12px; border-radius:20px; background: linear-gradient(90deg, rgba(0,87,183,0.08), rgba(138,43,226,0.04)); color: var(--accent); font-weight:600; }
+        .stButton>button { background: linear-gradient(90deg,#0077cc,#6a3fb5); color:#ffffff; border-radius:10px; padding:8px 14px; }
+        .stImage>div>img { box-shadow: 0 6px 18px rgba(10,20,40,0.08); border-radius:6px; border:1px solid rgba(10,20,40,0.03); }
+        .muted { color: #39536a; }
+        </style>
+        """
+    st.markdown(css, unsafe_allow_html=True)
+
+# --- Sidebar: language + theme + page navigation ---
 with st.sidebar:
+    # Language selector
     lang_choice = st.selectbox("Language / Bahasa", list(LANG_OPTIONS.keys()),
                                index=0 if st.session_state.lang == "en" else 1)
     st.session_state.lang = LANG_OPTIONS[lang_choice]
+
+    # Theme selector (new)
+    theme_choice = st.selectbox("Theme / Tema", ["Dark", "Light"],
+                                index=0 if st.session_state.theme == "dark" else 1)
+    st.session_state.theme = "dark" if theme_choice == "Dark" else "light"
+
+    # Inject theme-aware CSS immediately after theme selection so it updates UI
+    inject_futuristic_css(st.session_state.theme)
+
     st.markdown("---")
     page = st.radio("", ["Home / Introduction", "Image Processing Tools", "Team Members"])
 
@@ -124,45 +200,12 @@ TEXT = {
 
 t = TEXT[st.session_state.lang]
 
-# --- Futuristic theme CSS (single injection) ---
-def inject_futuristic_css():
-    css = """
-    <style>
-    :root{
-      --bg-1: #040812;
-      --bg-2: #071226;
-      --accent: #00ffe1;
-      --accent-2: #8a2be2;
-    }
-    [data-testid="stAppViewContainer"] > .main {
-      background: linear-gradient(135deg, #030612 0%, #00121a 60%);
-      color: #cfeef4;
-      min-height: 100vh;
-    }
-    [data-testid="stSidebar"] {
-      background: linear-gradient(180deg, rgba(7,18,38,0.95), rgba(2,10,20,0.95));
-      color: #cfeef4;
-    }
-    header[data-testid="stHeader"] {visibility:hidden;}
-    footer {visibility:hidden;}
-    h1,h2,h3 { color:#00ffe1; text-shadow: 0 0 8px rgba(0,255,225,0.08); }
-    .neon-box { background: rgba(255,255,255,0.02); padding:12px; border-radius:12px; border:1px solid rgba(0,255,225,0.04); }
-    .accent-pill { display:inline-block; padding:6px 12px; border-radius:20px; background: linear-gradient(90deg, rgba(0,255,225,0.12), rgba(138,43,226,0.08)); color: var(--accent); font-weight:600; }
-    .stButton>button { background: linear-gradient(90deg,#00ffe1,#8a2be2); color:#021018; border-radius:10px; padding:8px 14px; }
-    .stImage>div>img { box-shadow: 0 10px 40px rgba(0,0,0,0.6); border-radius:6px; border:1px solid rgba(255,255,255,0.03); }
-    .muted { color: #9aa8b2; }
-    </style>
-    """
-    st.markdown(css, unsafe_allow_html=True)
-
-inject_futuristic_css()
-
 # --- Shared helper functions (PIL + numpy, no cv2) ---
 def generate_grid_image_pil(size=512, grid_steps=8, dark=False):
     bg = (10, 18, 30) if dark else (255, 255, 255)
     line = (30, 40, 60) if dark else (200, 200, 200)
     arrow = (0, 255, 225) if dark else (0, 0, 200)
-    center_dot = (0, 150, 0)
+    center_dot = (0, 150, 0) if dark else (0, 90, 0)
     img = Image.new("RGB", (size, size), bg)
     draw = ImageDraw.Draw(img)
     step = max(4, size // grid_steps)
@@ -171,7 +214,7 @@ def generate_grid_image_pil(size=512, grid_steps=8, dark=False):
         draw.line([(0, i), (size, i)], fill=line, width=1)
     draw.line([(size//4, size//4), (3*size//4, size//4)], fill=arrow, width=6)
     arrow_head = [(3*size//4, size//4), (3*size//4 - 20, size//4 - 15), (3*size//4 - 20, size//4 + 15)]
-    draw.polygon(arrow_head, fill=(138, 43, 226))
+    draw.polygon(arrow_head, fill=(138, 43, 226) if dark else (138, 43, 226))
     r = 6
     cx, cy = size//2, size//2
     draw.ellipse([(cx-r, cy-r), (cx+r, cy+r)], fill=center_dot)
@@ -315,8 +358,10 @@ def render_home():
     st.subheader(tt["conv_title"])
     st.markdown(tt["conv_bullets"])
 
-    demo = generate_grid_image_pil(512, dark=True)
-    rotated = pil_rotate(demo, 30, bg=(10,18,30))
+    dark = (st.session_state.theme == "dark")
+    demo = generate_grid_image_pil(512, dark=dark)
+    bg_color = (10,18,30) if dark else (255,255,255)
+    rotated = pil_rotate(demo, 30, bg=bg_color)
     edges = pil_edge_approx(demo)
     st.header(tt["visual_examples"])
     col1, col2, col3 = st.columns(3)
@@ -338,11 +383,14 @@ def render_tools():
     st.markdown(f"<div class='neon-box'>{tt['tools_lead']}</div>", unsafe_allow_html=True)
 
     uploaded = st.file_uploader(tt["upload"], type=["jpg","jpeg","png"])
+    dark = (st.session_state.theme == "dark")
+    bg_color = (10,18,30) if dark else (255,255,255)
+
     if uploaded:
         pil = Image.open(uploaded).convert("RGB")
         img_arr = pil_to_array(pil)
     else:
-        demo = generate_grid_image_pil(512, dark=True)
+        demo = generate_grid_image_pil(512, dark=dark)
         img_arr = pil_to_array(demo)
 
     st.sidebar.header(tt["tools"])
@@ -363,15 +411,15 @@ def render_tools():
         h, w = transformed.shape[:2]
         new_w = max(1, int(w * scale)); new_h = max(1, int(h * scale))
         transformed = np.array(Image.fromarray(transformed).resize((new_w, new_h), resample=Image.BICUBIC))
-        canvas = Image.new("RGB", (w, h), (10,18,30))
+        canvas = Image.new("RGB", (w, h), bg_color)
         canvas.paste(Image.fromarray(transformed), ((w - new_w)//2, (h - new_h)//2))
         transformed = pil_to_array(canvas)
         # rotate
-        transformed = pil_to_array(Image.fromarray(transformed).rotate(angle, resample=Image.BICUBIC, expand=False, fillcolor=(10,18,30)))
+        transformed = pil_to_array(Image.fromarray(transformed).rotate(angle, resample=Image.BICUBIC, expand=False, fillcolor=bg_color))
         # shear
-        transformed = pil_to_array(Image.fromarray(transformed).transform((w, h), Image.AFFINE, (1.0, shear_x, 0.0, shear_y, 1.0, 0.0), resample=Image.BICUBIC, fillcolor=(10,18,30)))
+        transformed = pil_to_array(Image.fromarray(transformed).transform((w, h), Image.AFFINE, (1.0, shear_x, 0.0, shear_y, 1.0, 0.0), resample=Image.BICUBIC, fillcolor=bg_color))
         # translate
-        transformed = pil_to_array(Image.fromarray(transformed).transform((w, h), Image.AFFINE, (1,0,tx,0,1,ty), resample=Image.BICUBIC, fillcolor=(10,18,30)))
+        transformed = pil_to_array(Image.fromarray(transformed).transform((w, h), Image.AFFINE, (1,0,tx,0,1,ty), resample=Image.BICUBIC, fillcolor=bg_color))
 
         col_o, col_t = st.columns(2)
         with col_o:
