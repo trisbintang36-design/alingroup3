@@ -25,75 +25,63 @@ def inject_futuristic_css():
     @media (prefers-color-scheme: dark) {
       :root {
         --bg-main: #030612;
-        --bg-sidebar: linear-gradient(180deg, rgba(7,18,38,0.95), rgba(2,10,20,0.95));
         --text-main: #cfeef4;
         --accent: #00ffe1;
         --button-text: #021018;
-        --image-border-shadow: 0 10px 40px rgba(0,0,0,0.6);
-        --neon-box-bg: rgba(255,255,255,0.02);
-        --muted: #9aa8b2;
       }
       [data-testid="stAppViewContainer"] > .main {
         background: linear-gradient(135deg, #030612 0%, #00121a 60%);
         color: var(--text-main);
         min-height: 100vh;
       }
+      /* IMPORTANT: do not force a custom background on the sidebar.
+         Use 'unset' so the sidebar can follow Streamlit/browser/system defaults. */
       [data-testid="stSidebar"] {
-        background: var(--bg-sidebar);
-        color: var(--text-main);
+        background: unset !important;
+        color: inherit !important;
       }
       h1,h2,h3 { color: var(--accent); text-shadow: 0 0 8px rgba(0,255,225,0.08); }
-      .neon-box { background: var(--neon-box-bg); padding:12px; border-radius:12px; border:1px solid rgba(0,255,225,0.04); }
+      .neon-box { background: rgba(255,255,255,0.02); padding:12px; border-radius:12px; border:1px solid rgba(0,255,225,0.04); }
       .stButton>button { background: linear-gradient(90deg,#00ffe1,#8a2be2); color: var(--button-text); border-radius:10px; padding:8px 14px; }
-      .stImage>div>img { box-shadow: var(--image-border-shadow); border-radius:6px; border:1px solid rgba(255,255,255,0.03); }
-      .muted { color: var(--muted); }
+      .stImage>div>img { box-shadow: 0 10px 40px rgba(0,0,0,0.6); border-radius:6px; border:1px solid rgba(255,255,255,0.03); }
+      .muted { color: #9aa8b2; }
     }
 
     @media (prefers-color-scheme: light) {
       :root {
         --bg-main: #ffffff;
-        --bg-sidebar: linear-gradient(180deg, #ffffff, #f4f8ff);
         --text-main: #0b2540;
         --accent: #0057b7;
         --button-text: #ffffff;
-        --image-border-shadow: 0 6px 18px rgba(10,20,40,0.08);
-        --neon-box-bg: rgba(0,87,183,0.03);
-        --muted: #39536a;
       }
       [data-testid="stAppViewContainer"] > .main {
         background: linear-gradient(135deg, #ffffff 0%, #f6faff 60%);
         color: var(--text-main);
         min-height: 100vh;
       }
+      /* Keep sidebar default/transparent so it doesn't use our gradient color */
       [data-testid="stSidebar"] {
-        background: var(--bg-sidebar);
-        color: var(--text-main);
+        background: unset !important;
+        color: inherit !important;
       }
       h1,h2,h3 { color: var(--accent); text-shadow: none; }
-      .neon-box { background: var(--neon-box-bg); padding:12px; border-radius:12px; border:1px solid rgba(0,87,183,0.06); }
+      .neon-box { background: rgba(0,87,183,0.03); padding:12px; border-radius:12px; border:1px solid rgba(0,87,183,0.06); }
       .stButton>button { background: linear-gradient(90deg,#0077cc,#6a3fb5); color: var(--button-text); border-radius:10px; padding:8px 14px; }
-      .stImage>div>img { box-shadow: var(--image-border-shadow); border-radius:6px; border:1px solid rgba(10,20,40,0.03); }
-      .muted { color: var(--muted); }
+      .stImage>div>img { box-shadow: 0 6px 18px rgba(10,20,40,0.08); border-radius:6px; border:1px solid rgba(10,20,40,0.03); }
+      .muted { color: #39536a; }
     }
 
-    /* Force classes to override system preference (used when user selects Dark/Light manually) */
-    body.force-dark [data-testid="stAppViewContainer"] > .main,
-    body.force-dark [data-testid="stSidebar"] {
+    /* Force classes to override system preference (used when user selects Dark/Light manually)
+       Note: we purposely DO NOT force the sidebar background here as well. */
+    body.force-dark [data-testid="stAppViewContainer"] > .main {
       background: linear-gradient(135deg, #030612 0%, #00121a 60%) !important;
       color: #cfeef4 !important;
     }
-    body.force-dark [data-testid="stSidebar"] {
-      background: linear-gradient(180deg, rgba(7,18,38,0.95), rgba(2,10,20,0.95)) !important;
-    }
     body.force-dark h1,h2,h3 { color:#00ffe1 !important; text-shadow: 0 0 8px rgba(0,255,225,0.08) !important; }
 
-    body.force-light [data-testid="stAppViewContainer"] > .main,
-    body.force-light [data-testid="stSidebar"] {
+    body.force-light [data-testid="stAppViewContainer"] > .main {
       background: linear-gradient(135deg, #ffffff 0%, #f6faff 60%) !important;
       color: #0b2540 !important;
-    }
-    body.force-light [data-testid="stSidebar"] {
-      background: linear-gradient(180deg, #ffffff, #f4f8ff) !important;
     }
     body.force-light h1,h2,h3 { color:#0057b7 !important; text-shadow: none !important; }
 
@@ -127,7 +115,6 @@ with st.sidebar:
     page = st.radio("", ["Home / Introduction", "Image Processing Tools", "Team Members"])
 
 # Add a small DOM node and JS to set body.force-dark / body.force-light when user chose manual theme.
-# If theme == "auto", we do not force any class (browser will use prefers-color-scheme).
 st.markdown(
     f"""
     <div id="theme-data" data-theme="{st.session_state.theme}" style="display:none"></div>
