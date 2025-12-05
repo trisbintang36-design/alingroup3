@@ -15,69 +15,96 @@ if "lang" not in st.session_state:
 
 # --- Theme selection stored in session_state (new) ---
 if "theme" not in st.session_state:
-    st.session_state.theme = "dark"  # default to dark for better contrast on bright screens
+    st.session_state.theme = "auto"  # auto = follow system prefers-color-scheme
 
-# --- Futuristic theme CSS (single injection) ---
-def inject_futuristic_css(theme="dark"):
-    # Theme-aware CSS. Call this after the sidebar theme selector so it updates on change.
-    if theme == "dark":
-        css = """
-        <style>
-        :root{
-          --bg-1: #040812;
-          --bg-2: #071226;
-          --accent: #00ffe1;
-          --accent-2: #8a2be2;
-        }
-        [data-testid="stAppViewContainer"] > .main {
-          background: linear-gradient(135deg, #030612 0%, #00121a 60%);
-          color: #cfeef4;
-          min-height: 100vh;
-        }
-        [data-testid="stSidebar"] {
-          background: linear-gradient(180deg, rgba(7,18,38,0.95), rgba(2,10,20,0.95));
-          color: #cfeef4;
-        }
-        header[data-testid="stHeader"] {visibility:hidden;}
-        footer {visibility:hidden;}
-        h1,h2,h3 { color:#00ffe1; text-shadow: 0 0 8px rgba(0,255,225,0.08); }
-        .neon-box { background: rgba(255,255,255,0.02); padding:12px; border-radius:12px; border:1px solid rgba(0,255,225,0.04); }
-        .accent-pill { display:inline-block; padding:6px 12px; border-radius:20px; background: linear-gradient(90deg, rgba(0,255,225,0.12), rgba(138,43,226,0.08)); color: var(--accent); font-weight:600; }
-        .stButton>button { background: linear-gradient(90deg,#00ffe1,#8a2be2); color:#021018; border-radius:10px; padding:8px 14px; }
-        .stImage>div>img { box-shadow: 0 10px 40px rgba(0,0,0,0.6); border-radius:6px; border:1px solid rgba(255,255,255,0.03); }
-        .muted { color: #9aa8b2; }
-        </style>
-        """
-    else:
-        # Light theme CSS
-        css = """
-        <style>
-        :root{
-          --bg-1: #ffffff;
-          --bg-2: #f6f8fa;
-          --accent: #0057b7;
-          --accent-2: #8a2be2;
-        }
-        [data-testid="stAppViewContainer"] > .main {
-          background: linear-gradient(135deg, #ffffff 0%, #f6faff 60%);
-          color: #0b2540;
-          min-height: 100vh;
-        }
-        [data-testid="stSidebar"] {
-          background: linear-gradient(180deg, #ffffff, #f4f8ff);
-          color: #0b2540;
-        }
-        header[data-testid="stHeader"] {visibility:hidden;}
-        footer {visibility:hidden;}
-        h1,h2,h3 { color:#0057b7; text-shadow: none; }
-        .neon-box { background: rgba(0,87,183,0.03); padding:12px; border-radius:12px; border:1px solid rgba(0,87,183,0.06); }
-        .accent-pill { display:inline-block; padding:6px 12px; border-radius:20px; background: linear-gradient(90deg, rgba(0,87,183,0.08), rgba(138,43,226,0.04)); color: var(--accent); font-weight:600; }
-        .stButton>button { background: linear-gradient(90deg,#0077cc,#6a3fb5); color:#ffffff; border-radius:10px; padding:8px 14px; }
-        .stImage>div>img { box-shadow: 0 6px 18px rgba(10,20,40,0.08); border-radius:6px; border:1px solid rgba(10,20,40,0.03); }
-        .muted { color: #39536a; }
-        </style>
-        """
+# --- Futuristic theme CSS (media-query + force classes) ---
+def inject_futuristic_css():
+    css = """
+    <style>
+    /* Default: follow system preference */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-main: #030612;
+        --bg-sidebar: linear-gradient(180deg, rgba(7,18,38,0.95), rgba(2,10,20,0.95));
+        --text-main: #cfeef4;
+        --accent: #00ffe1;
+        --button-text: #021018;
+        --image-border-shadow: 0 10px 40px rgba(0,0,0,0.6);
+        --neon-box-bg: rgba(255,255,255,0.02);
+        --muted: #9aa8b2;
+      }
+      [data-testid="stAppViewContainer"] > .main {
+        background: linear-gradient(135deg, #030612 0%, #00121a 60%);
+        color: var(--text-main);
+        min-height: 100vh;
+      }
+      [data-testid="stSidebar"] {
+        background: var(--bg-sidebar);
+        color: var(--text-main);
+      }
+      h1,h2,h3 { color: var(--accent); text-shadow: 0 0 8px rgba(0,255,225,0.08); }
+      .neon-box { background: var(--neon-box-bg); padding:12px; border-radius:12px; border:1px solid rgba(0,255,225,0.04); }
+      .stButton>button { background: linear-gradient(90deg,#00ffe1,#8a2be2); color: var(--button-text); border-radius:10px; padding:8px 14px; }
+      .stImage>div>img { box-shadow: var(--image-border-shadow); border-radius:6px; border:1px solid rgba(255,255,255,0.03); }
+      .muted { color: var(--muted); }
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg-main: #ffffff;
+        --bg-sidebar: linear-gradient(180deg, #ffffff, #f4f8ff);
+        --text-main: #0b2540;
+        --accent: #0057b7;
+        --button-text: #ffffff;
+        --image-border-shadow: 0 6px 18px rgba(10,20,40,0.08);
+        --neon-box-bg: rgba(0,87,183,0.03);
+        --muted: #39536a;
+      }
+      [data-testid="stAppViewContainer"] > .main {
+        background: linear-gradient(135deg, #ffffff 0%, #f6faff 60%);
+        color: var(--text-main);
+        min-height: 100vh;
+      }
+      [data-testid="stSidebar"] {
+        background: var(--bg-sidebar);
+        color: var(--text-main);
+      }
+      h1,h2,h3 { color: var(--accent); text-shadow: none; }
+      .neon-box { background: var(--neon-box-bg); padding:12px; border-radius:12px; border:1px solid rgba(0,87,183,0.06); }
+      .stButton>button { background: linear-gradient(90deg,#0077cc,#6a3fb5); color: var(--button-text); border-radius:10px; padding:8px 14px; }
+      .stImage>div>img { box-shadow: var(--image-border-shadow); border-radius:6px; border:1px solid rgba(10,20,40,0.03); }
+      .muted { color: var(--muted); }
+    }
+
+    /* Force classes to override system preference (used when user selects Dark/Light manually) */
+    body.force-dark [data-testid="stAppViewContainer"] > .main,
+    body.force-dark [data-testid="stSidebar"] {
+      background: linear-gradient(135deg, #030612 0%, #00121a 60%) !important;
+      color: #cfeef4 !important;
+    }
+    body.force-dark [data-testid="stSidebar"] {
+      background: linear-gradient(180deg, rgba(7,18,38,0.95), rgba(2,10,20,0.95)) !important;
+    }
+    body.force-dark h1,h2,h3 { color:#00ffe1 !important; text-shadow: 0 0 8px rgba(0,255,225,0.08) !important; }
+
+    body.force-light [data-testid="stAppViewContainer"] > .main,
+    body.force-light [data-testid="stSidebar"] {
+      background: linear-gradient(135deg, #ffffff 0%, #f6faff 60%) !important;
+      color: #0b2540 !important;
+    }
+    body.force-light [data-testid="stSidebar"] {
+      background: linear-gradient(180deg, #ffffff, #f4f8ff) !important;
+    }
+    body.force-light h1,h2,h3 { color:#0057b7 !important; text-shadow: none !important; }
+
+    /* small helpers */
+    .neon-box { transition: background .2s, border .2s; }
+    </style>
+    """
     st.markdown(css, unsafe_allow_html=True)
+
+# Inject CSS once
+inject_futuristic_css()
 
 # --- Sidebar: language + theme + page navigation ---
 with st.sidebar:
@@ -86,16 +113,40 @@ with st.sidebar:
                                index=0 if st.session_state.lang == "en" else 1)
     st.session_state.lang = LANG_OPTIONS[lang_choice]
 
-    # Theme selector (new)
-    theme_choice = st.selectbox("Theme / Tema", ["Dark", "Light"],
-                                index=0 if st.session_state.theme == "dark" else 1)
-    st.session_state.theme = "dark" if theme_choice == "Dark" else "light"
-
-    # Inject theme-aware CSS immediately after theme selection so it updates UI
-    inject_futuristic_css(st.session_state.theme)
+    # Theme selector (Auto / Dark / Light)
+    theme_choice = st.selectbox("Theme / Tema", ["Auto (system)", "Dark", "Light"],
+                                index=0 if st.session_state.theme == "auto" else (1 if st.session_state.theme == "dark" else 2))
+    if theme_choice == "Auto (system)":
+        st.session_state.theme = "auto"
+    elif theme_choice == "Dark":
+        st.session_state.theme = "dark"
+    else:
+        st.session_state.theme = "light"
 
     st.markdown("---")
     page = st.radio("", ["Home / Introduction", "Image Processing Tools", "Team Members"])
+
+# Add a small DOM node and JS to set body.force-dark / body.force-light when user chose manual theme.
+# If theme == "auto", we do not force any class (browser will use prefers-color-scheme).
+st.markdown(
+    f"""
+    <div id="theme-data" data-theme="{st.session_state.theme}" style="display:none"></div>
+    <script>
+    (function() {{
+      const el = document.getElementById('theme-data');
+      if (!el) return;
+      const theme = el.getAttribute('data-theme');
+      document.body.classList.remove('force-dark','force-light');
+      if (theme === 'dark') {{
+        document.body.classList.add('force-dark');
+      }} else if (theme === 'light') {{
+        document.body.classList.add('force-light');
+      }} // if 'auto' do nothing, let prefers-color-scheme apply
+    }})();
+    </script>
+    """,
+    unsafe_allow_html=True,
+)
 
 # --- Translations (centralized) ---
 TEXT = {
@@ -503,29 +554,6 @@ def render_team():
             st.markdown(f"- **{tt['distribution']}:** {member['distribution']}")
             st.markdown(tt["contrib_short"])
         st.markdown("---")
-
-# Helper used by team rendering (placed after render_team to use generate_avatar)
-def find_photo_path(member, dirs):
-    candidates = []
-    if member.get("photo_file"):
-        candidates.append(member["photo_file"])
-    name_parts = [member["short"]] + member["full_name"].lower().split()
-    for part in name_parts:
-        candidates.append(f"{part}.jpg")
-        candidates.append(f"{part}.jpeg")
-        candidates.append(f"{part}.png")
-    for d in dirs:
-        p = Path(d)
-        if not p.exists() or not p.is_dir():
-            continue
-        for cand in candidates:
-            fpath = p / cand
-            if fpath.exists():
-                return str(fpath)
-        for f in p.iterdir():
-            if f.is_file() and member["short"].lower() in f.name.lower() and f.suffix.lower() in [".jpg", ".jpeg", ".png"]:
-                return str(f)
-    return None
 
 # --- Run selected page ---
 if page == "Home / Introduction":
