@@ -13,127 +13,13 @@ LANG_OPTIONS = {"English": "en", "Bahasa Indonesia": "id"}
 if "lang" not in st.session_state:
     st.session_state.lang = "id"  # default bahasa indonesia
 
-# --- Theme selection stored in session_state (new) ---
-if "theme" not in st.session_state:
-    st.session_state.theme = "auto"  # auto = follow system prefers-color-scheme
-
-# --- Futuristic theme CSS (media-query + force classes) ---
-def inject_futuristic_css():
-    css = """
-    <style>
-    /* Default: follow system preference */
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg-main: #030612;
-        --text-main: #cfeef4;
-        --accent: #00ffe1;
-        --button-text: #021018;
-      }
-      [data-testid="stAppViewContainer"] > .main {
-        background: linear-gradient(135deg, #030612 0%, #00121a 60%);
-        color: var(--text-main);
-        min-height: 100vh;
-      }
-      /* IMPORTANT: do not force a custom background on the sidebar.
-         Use 'unset' so the sidebar can follow Streamlit/browser/system defaults. */
-      [data-testid="stSidebar"] {
-        background: unset !important;
-        color: inherit !important;
-      }
-      h1,h2,h3 { color: var(--accent); text-shadow: 0 0 8px rgba(0,255,225,0.08); }
-      .neon-box { background: rgba(255,255,255,0.02); padding:12px; border-radius:12px; border:1px solid rgba(0,255,225,0.04); }
-      .stButton>button { background: linear-gradient(90deg,#00ffe1,#8a2be2); color: var(--button-text); border-radius:10px; padding:8px 14px; }
-      .stImage>div>img { box-shadow: 0 10px 40px rgba(0,0,0,0.6); border-radius:6px; border:1px solid rgba(255,255,255,0.03); }
-      .muted { color: #9aa8b2; }
-    }
-
-    @media (prefers-color-scheme: light) {
-      :root {
-        --bg-main: #ffffff;
-        --text-main: #0b2540;
-        --accent: #0057b7;
-        --button-text: #ffffff;
-      }
-      [data-testid="stAppViewContainer"] > .main {
-        background: linear-gradient(135deg, #ffffff 0%, #f6faff 60%);
-        color: var(--text-main);
-        min-height: 100vh;
-      }
-      /* Keep sidebar default/transparent so it doesn't use our gradient color */
-      [data-testid="stSidebar"] {
-        background: unset !important;
-        color: inherit !important;
-      }
-      h1,h2,h3 { color: var(--accent); text-shadow: none; }
-      .neon-box { background: rgba(0,87,183,0.03); padding:12px; border-radius:12px; border:1px solid rgba(0,87,183,0.06); }
-      .stButton>button { background: linear-gradient(90deg,#0077cc,#6a3fb5); color: var(--button-text); border-radius:10px; padding:8px 14px; }
-      .stImage>div>img { box-shadow: 0 6px 18px rgba(10,20,40,0.08); border-radius:6px; border:1px solid rgba(10,20,40,0.03); }
-      .muted { color: #39536a; }
-    }
-
-    /* Force classes to override system preference (used when user selects Dark/Light manually)
-       Note: we purposely DO NOT force the sidebar background here as well. */
-    body.force-dark [data-testid="stAppViewContainer"] > .main {
-      background: linear-gradient(135deg, #030612 0%, #00121a 60%) !important;
-      color: #cfeef4 !important;
-    }
-    body.force-dark h1,h2,h3 { color:#00ffe1 !important; text-shadow: 0 0 8px rgba(0,255,225,0.08) !important; }
-
-    body.force-light [data-testid="stAppViewContainer"] > .main {
-      background: linear-gradient(135deg, #ffffff 0%, #f6faff 60%) !important;
-      color: #0b2540 !important;
-    }
-    body.force-light h1,h2,h3 { color:#0057b7 !important; text-shadow: none !important; }
-
-    /* small helpers */
-    .neon-box { transition: background .2s, border .2s; }
-    </style>
-    """
-    st.markdown(css, unsafe_allow_html=True)
-
-# Inject CSS once
-inject_futuristic_css()
-
-# --- Sidebar: language + theme + page navigation ---
+# Sidebar: language + page navigation
 with st.sidebar:
-    # Language selector
     lang_choice = st.selectbox("Language / Bahasa", list(LANG_OPTIONS.keys()),
                                index=0 if st.session_state.lang == "en" else 1)
     st.session_state.lang = LANG_OPTIONS[lang_choice]
-
-    # Theme selector (Auto / Dark / Light)
-    theme_choice = st.selectbox("Theme / Tema", ["Auto (system)", "Dark", "Light"],
-                                index=0 if st.session_state.theme == "auto" else (1 if st.session_state.theme == "dark" else 2))
-    if theme_choice == "Auto (system)":
-        st.session_state.theme = "auto"
-    elif theme_choice == "Dark":
-        st.session_state.theme = "dark"
-    else:
-        st.session_state.theme = "light"
-
     st.markdown("---")
     page = st.radio("", ["Home / Introduction", "Image Processing Tools", "Team Members"])
-
-# Add a small DOM node and JS to set body.force-dark / body.force-light when user chose manual theme.
-st.markdown(
-    f"""
-    <div id="theme-data" data-theme="{st.session_state.theme}" style="display:none"></div>
-    <script>
-    (function() {{
-      const el = document.getElementById('theme-data');
-      if (!el) return;
-      const theme = el.getAttribute('data-theme');
-      document.body.classList.remove('force-dark','force-light');
-      if (theme === 'dark') {{
-        document.body.classList.add('force-dark');
-      }} else if (theme === 'light') {{
-        document.body.classList.add('force-light');
-      }} // if 'auto' do nothing, let prefers-color-scheme apply
-    }})();
-    </script>
-    """,
-    unsafe_allow_html=True,
-)
 
 # --- Translations (centralized) ---
 TEXT = {
@@ -238,12 +124,15 @@ TEXT = {
 
 t = TEXT[st.session_state.lang]
 
+
+   
+
 # --- Shared helper functions (PIL + numpy, no cv2) ---
 def generate_grid_image_pil(size=512, grid_steps=8, dark=False):
     bg = (10, 18, 30) if dark else (255, 255, 255)
     line = (30, 40, 60) if dark else (200, 200, 200)
     arrow = (0, 255, 225) if dark else (0, 0, 200)
-    center_dot = (0, 150, 0) if dark else (0, 90, 0)
+    center_dot = (0, 150, 0)
     img = Image.new("RGB", (size, size), bg)
     draw = ImageDraw.Draw(img)
     step = max(4, size // grid_steps)
@@ -252,7 +141,7 @@ def generate_grid_image_pil(size=512, grid_steps=8, dark=False):
         draw.line([(0, i), (size, i)], fill=line, width=1)
     draw.line([(size//4, size//4), (3*size//4, size//4)], fill=arrow, width=6)
     arrow_head = [(3*size//4, size//4), (3*size//4 - 20, size//4 - 15), (3*size//4 - 20, size//4 + 15)]
-    draw.polygon(arrow_head, fill=(138, 43, 226) if dark else (138, 43, 226))
+    draw.polygon(arrow_head, fill=(138, 43, 226))
     r = 6
     cx, cy = size//2, size//2
     draw.ellipse([(cx-r, cy-r), (cx+r, cy+r)], fill=center_dot)
@@ -396,10 +285,8 @@ def render_home():
     st.subheader(tt["conv_title"])
     st.markdown(tt["conv_bullets"])
 
-    dark = (st.session_state.theme == "dark")
-    demo = generate_grid_image_pil(512, dark=dark)
-    bg_color = (10,18,30) if dark else (255,255,255)
-    rotated = pil_rotate(demo, 30, bg=bg_color)
+    demo = generate_grid_image_pil(512, dark=True)
+    rotated = pil_rotate(demo, 30, bg=(10,18,30))
     edges = pil_edge_approx(demo)
     st.header(tt["visual_examples"])
     col1, col2, col3 = st.columns(3)
@@ -421,14 +308,11 @@ def render_tools():
     st.markdown(f"<div class='neon-box'>{tt['tools_lead']}</div>", unsafe_allow_html=True)
 
     uploaded = st.file_uploader(tt["upload"], type=["jpg","jpeg","png"])
-    dark = (st.session_state.theme == "dark")
-    bg_color = (10,18,30) if dark else (255,255,255)
-
     if uploaded:
         pil = Image.open(uploaded).convert("RGB")
         img_arr = pil_to_array(pil)
     else:
-        demo = generate_grid_image_pil(512, dark=dark)
+        demo = generate_grid_image_pil(512, dark=True)
         img_arr = pil_to_array(demo)
 
     st.sidebar.header(tt["tools"])
@@ -449,15 +333,15 @@ def render_tools():
         h, w = transformed.shape[:2]
         new_w = max(1, int(w * scale)); new_h = max(1, int(h * scale))
         transformed = np.array(Image.fromarray(transformed).resize((new_w, new_h), resample=Image.BICUBIC))
-        canvas = Image.new("RGB", (w, h), bg_color)
+        canvas = Image.new("RGB", (w, h), (10,18,30))
         canvas.paste(Image.fromarray(transformed), ((w - new_w)//2, (h - new_h)//2))
         transformed = pil_to_array(canvas)
         # rotate
-        transformed = pil_to_array(Image.fromarray(transformed).rotate(angle, resample=Image.BICUBIC, expand=False, fillcolor=bg_color))
+        transformed = pil_to_array(Image.fromarray(transformed).rotate(angle, resample=Image.BICUBIC, expand=False, fillcolor=(10,18,30)))
         # shear
-        transformed = pil_to_array(Image.fromarray(transformed).transform((w, h), Image.AFFINE, (1.0, shear_x, 0.0, shear_y, 1.0, 0.0), resample=Image.BICUBIC, fillcolor=bg_color))
+        transformed = pil_to_array(Image.fromarray(transformed).transform((w, h), Image.AFFINE, (1.0, shear_x, 0.0, shear_y, 1.0, 0.0), resample=Image.BICUBIC, fillcolor=(10,18,30)))
         # translate
-        transformed = pil_to_array(Image.fromarray(transformed).transform((w, h), Image.AFFINE, (1,0,tx,0,1,ty), resample=Image.BICUBIC, fillcolor=bg_color))
+        transformed = pil_to_array(Image.fromarray(transformed).transform((w, h), Image.AFFINE, (1,0,tx,0,1,ty), resample=Image.BICUBIC, fillcolor=(10,18,30)))
 
         col_o, col_t = st.columns(2)
         with col_o:
@@ -541,6 +425,29 @@ def render_team():
             st.markdown(f"- **{tt['distribution']}:** {member['distribution']}")
             st.markdown(tt["contrib_short"])
         st.markdown("---")
+
+# Helper used by team rendering (placed after render_team to use generate_avatar)
+def find_photo_path(member, dirs):
+    candidates = []
+    if member.get("photo_file"):
+        candidates.append(member["photo_file"])
+    name_parts = [member["short"]] + member["full_name"].lower().split()
+    for part in name_parts:
+        candidates.append(f"{part}.jpg")
+        candidates.append(f"{part}.jpeg")
+        candidates.append(f"{part}.png")
+    for d in dirs:
+        p = Path(d)
+        if not p.exists() or not p.is_dir():
+            continue
+        for cand in candidates:
+            fpath = p / cand
+            if fpath.exists():
+                return str(fpath)
+        for f in p.iterdir():
+            if f.is_file() and member["short"].lower() in f.name.lower() and f.suffix.lower() in [".jpg", ".jpeg", ".png"]:
+                return str(f)
+    return None
 
 # --- Run selected page ---
 if page == "Home / Introduction":
