@@ -19,7 +19,7 @@ TEXT = {
         "sid": "SID",
         "origin": "Origin",
         "distribution": "Task distribution",
-        "contrib_short": "Contributed to survey, cleaning, analysis, visualization, and building the Streamlit dashboard."
+        "contrib_short": "Contributed to analysis, visualization, and building the Streamlit dashboard."
     },
     "id": {
         "page_title": "Anggota Tim",
@@ -28,7 +28,7 @@ TEXT = {
         "sid": "SID",
         "origin": "Asal daerah",
         "distribution": "Distribusi tugas",
-        "contrib_short": "Berkontribusi dalam survei, pembersihan data, analisis, visualisasi, dan pembuatan dashboard Streamlit."
+        "contrib_short": "Berkontribusi dalam analisis, visualisasi, dan pembuatan dashboard Streamlit."
     }
 }
 
@@ -45,7 +45,7 @@ team = [
     {
         "short": "tris",
         "full_name": "Moh. Trisbintang A. Menu",
-        "distribution": "Survei, bersihkan data, dashboard Streamlit (menu & navigasi)",
+        "distribution": "dashboard Streamlit (menu & navigasi)",
         "sid": "004202400102",
         "origin": "Gorontalo",
         "photo_file": "tris.jpg",
@@ -53,7 +53,7 @@ team = [
     {
         "short": "fia",
         "full_name": "Dwi Anfia Putri Wulandari",
-        "distribution": "Analisis dasar (histogram, boxplot), coding grafik Python, Streamlit bagian grafik",
+        "distribution": "coding tema web Python, Streamlit bagian tema",
         "sid": "004202400034",
         "origin": "Bogor",
         "photo_file": "fia.jpg",
@@ -61,7 +61,7 @@ team = [
     {
         "short": "gina",
         "full_name": "Gina Sonia",
-        "distribution": "Fokus laporan & bantu olah data",
+        "distribution": "Fokus laporan & buat contoh",
         "sid": "004202400076",
         "origin": "Cikampek",
         "photo_file": "gina.jpg",
@@ -69,7 +69,7 @@ team = [
     {
         "short": "fasya",
         "full_name": "Ananda Fasya Wiratama Putri",
-        "distribution": "Analisis hubungan variabel, penjelasan pengaruh medsos ke mental, Streamlit bagian analisis",
+        "distribution": "membuat coding python & menyusun report",
         "sid": "004202400107",
         "origin": "Depok",
         "photo_file": "fasya.jpg",
@@ -133,4 +133,5 @@ for member in team:
         st.markdown(f"- **{t['distribution']}:** {member['distribution']}")
         st.markdown(t["contrib_short"])
     st.markdown("---")
+
 
